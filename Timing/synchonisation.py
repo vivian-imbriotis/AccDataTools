@@ -8,11 +8,11 @@ Created on Thu Jul 16 14:50:32 2020
 import numpy as np
 
 
-from accdatatools.ProcessPupil.size import get_pupil_siz_at_each_eyecam_frame
+from accdatatools.ProcessPupil.size import get_pupil_size_at_each_eyecam_frame
 from accdatatools.Utils.deeploadmat import loadmat
 from accdatatools.Utils.signal_processing import (rising_edges, 
                                                   rising_or_falling_edges)
-from accdatatools.Observations import recordings
+from accdatatools.Observations.recordings import Recording
 
 
 
@@ -34,7 +34,7 @@ def get_neural_frame_times(timeline_path, number_of_frames):
         The Timeline.mat object has a frame counter which describes the number
         of frames captured before the current tick. This is raised if the 
         counter is either not monotonically increasing, or if it increases
-        by more than 1 at each clock tick.
+        by more than 1 in a single millisecond clock tick.
 
     Returns
     -------
@@ -58,11 +58,26 @@ def get_neural_frame_times(timeline_path, number_of_frames):
     #Each suite2p frame is the average of 6 raw frames
     #extra ticks are extraneous
     frame_times = frame_times[:number_of_frames*6]
-    frame_times = frame_times.reshape(number_of_frames, 6)
+    try:
+        frame_times = frame_times.reshape(number_of_frames, 6)
+    except ValueError:
+            #in the case where number_of_frames*6 > len(frame_times)
+            missing_frames = number_of_frames - frame_times.shape[0]//6
+            frame_times = frame_times[:(number_of_frames-missing_frames)*6]
+            frame_times = frame_times.reshape(number_of_frames-missing_frames, 6)
+            frame_times = np.mean(frame_times, axis = -1)
+            #In this case, we don't know when the last frame happens, but
+            #we can just linearly extrapolate
+            last_frames = np.empty(missing_frames)
+            delta_T = np.mean(np.diff(frame_times))
+            for idx, _ in enumerate(last_frames):
+                last_frames[idx] = frame_times[-1] + (idx+1)*delta_T
+            frame_times = np.append(frame_times,last_frames)
+            return frame_times
     frame_times = np.mean(frame_times, axis = -1)
     return frame_times
 
-def get_lick_state_by_neural_frame(timeline_path, frame_times):
+def get_lick_state_by_frame(timeline_path, frame_times):
     '''
     For each frame, whether one or more licks occurred during the
     time over which that frame was captured.
@@ -72,7 +87,8 @@ def get_lick_state_by_neural_frame(timeline_path, frame_times):
     timeline_path : string
         Path to Timeline.mat file
     frame_times : array of floats
-        List of times of averaged frames; output of get_frame_times()
+        List of times of averaged frames; output of get_neural_frame_times()
+        or of get_eyecam_frame_times()
 
     Returns
     -------
@@ -96,16 +112,99 @@ def get_lick_state_by_neural_frame(timeline_path, frame_times):
     #and then get the elementwise differences:
     return np.append(np.diff(cumulative_licks),0)
 
-def get_pupil_at_each_timepoint(timeline_path, h5_path):
-    timeline = loadmat(timeline_path)
-    timeline = timeline['Timeline']
-    eye_cam_voltages = timeline['rawDAQData'][:,3]
-    edges = rising_or_falling_edges(eye_cam_voltages, cutoff=0.5)
-    eye_cam_frame_times = timeline['rawDAQTimestamps'][edges]
-    pupil_sizes = get_pupil_size_at_each_eyecam_frame(h5_path)
-    print(eye_cam_frame_times.shape)
-    print(pupil_sizes.shape)
-    return np.stack(eye_cam_frame_times,pupil_sizes)
+
+def get_eyecam_frame_times(matlab_timeline_file, dlc_h5_file):
+    obj = loadmat(matlab_timeline_file)
+    timeline = obj["Timeline"]
+    columns = np.array([i.name for i in timeline["hw"]["inputs"]])
+    eye_camera_strobe = timeline["rawDAQData"][:,np.where(columns=="eyeCameraStrobe")]
+    eye_camera_strobe = eye_camera_strobe.reshape(-1) #Remove excess axes
+    edges = rising_or_falling_edges(eye_camera_strobe, 0.5)
+    eye_frames = intersperse_events(edges,n=20)
+    timestamps = timeline['rawDAQTimestamps']
+    eye_frame_times = timestamps[eye_frames]
+    return eye_frame_times
+
+
+def intersperse_events(input_array, n):
+    '''
+    Replaces each single True value in the input array with N evenly 
+    distributed True values.
+    
+    >>> intersperse_events(np.array([1,0,0,0,1,0,1]),2).astype('int')
+    Out: array([1, 0, 1, 0, 1, 1, 0])
+
+    Parameters
+    ----------
+    input_array : Array of Bool or Array of Bool-like
+    n : int
+
+    Returns
+    -------
+    output_array : Array of Bool
+    '''
+    #get an array of true indexes
+    events, = np.where(input_array)
+    output_array = np.zeros(input_array.shape,dtype=bool)
+    #in terms of indexes, where should all the new events go?
+    #Well, just construct a linearly spaced vector between
+    #each event, including the starting but not the stopping
+    #event. This will get (input_array-1)*N events!
+    for (this_event,next_event) in zip(events[:-1],events[1:]):
+        interspersed_events = np.linspace(this_event,next_event,n,endpoint=False)
+        interspersed_events = np.round(interspersed_events).astype('int')
+        output_array[interspersed_events] = True
+    return output_array
+
+# def get_pupil_at_each_timepoint(timeline_path, h5_path):
+#     timeline = loadmat(timeline_path)
+#     timeline = timeline['Timeline']
+#     eye_cam_voltages = timeline['rawDAQData'][:,3]
+#     edges = rising_or_falling_edges(eye_cam_voltages, cutoff=0.5)
+#     eye_cam_frame_times = timeline['rawDAQTimestamps'][edges]
+#     pupil_sizes = get_pupil_size_at_each_eyecam_frame(h5_path)
+#     print(eye_cam_frame_times.shape)
+#     print(pupil_sizes.shape)
+#     return np.stack(eye_cam_frame_times,pupil_sizes)
+
+def get_nearest_frame_to_each_timepoint(frame_times, ls_of_timepoints):
+    '''
+    Get an array of the indexes of the frames captured closest to a list
+    of times. 
+    
+    Example usage:
+        You have an array of frame times of a camera viewing the mouses's head
+        and an array of times the mouse licked an electrode.
+        To get the frame captured closest to each lick, call
+        >>>get_nearest_frame_to_each_timepoint(mouse_head_frame_times, 
+                                               licking_times)
+
+    Parameters
+    ----------
+    frame_times : array of float
+        The times each frame occurred.
+    ls_of_timepoints : array of float
+        The event times of interest.
+
+    Returns
+    -------
+    frameidx_list : array of int
+        The frame indexes corresponding to ls_of_timepoints.
+
+    '''
+    #find all the smallest idxs such that all frame_times[idxs]>ls_of_timepoints
+    idxs = np.searchsorted(frame_times, ls_of_timepoints, side="left")
+    #Now there are only two options:
+    #Either frame_times[idxs][n] is closest to ls_of_timepoints[n],
+    #  or frame_times[idxs][n-1] is. Set up a condition list:
+    suprema = frame_times[idxs]
+    infima  = frame_times[idxs-1]
+    condlist = [np.abs(suprema - ls_of_timepoints) < np.abs(infima - ls_of_timepoints),
+                True]
+    choicelist = [idxs, idxs-1]
+    frame_idx_list = np.select(condlist, choicelist)
+    return frame_idx_list
+
 
 def get_pupil_size_by_neural_frame(timeline_path, h5_path, frame_times):
     pass

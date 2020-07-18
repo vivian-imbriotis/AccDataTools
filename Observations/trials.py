@@ -23,11 +23,11 @@ import pickle as pkl
 
 from accdatatools import GLOBALS
 
-from accdatatools.Utils.path_manipulation import apply_to_all_one_plane_recordings
+from accdatatools.Utils.map_across_dataset import apply_to_all_one_plane_recordings
 from accdatatools.Utils.deeploadmat import loadmat
 from accdatatools.Utils.convienience import item
 from accdatatools.DataCleaning.determine_dprime import calc_d_prime
-from accdatatools.Timing.synchronisation import get_neural_frame_times,get_lick_state_by_frame
+from accdatatools.Timing.synchonisation import get_neural_frame_times,get_lick_state_by_frame
 from accdatatools.Observations.recordings import Recording
 
 
@@ -46,9 +46,9 @@ class Trial:
         else: 
             raise ValueError('recording must be an existing directory')
         self.stim_id        = struct.stimID
-        self.isleft         = self.stim_id in LEFT
-        self.isright        = self.stim_id in RIGHT
-        self.isgo           = self.stim_id in GO
+        self.isleft         = self.stim_id in GLOBALS.LEFT
+        self.isright        = self.stim_id in GLOBALS.RIGHT
+        self.isgo           = self.stim_id in GLOBALS.GO
         self.correct        = struct.correct
         self.affirmative    = ((self.correct and self.isgo) or 
                                (not self.correct and not self.isgo))
@@ -93,8 +93,31 @@ class Trial:
         return (all_traces[:,start_idx:end_idx], all_spks[:,start_idx:end_idx],
                 licks[start_idx:end_idx])
         
+    def is_occuring(self, time, include_quiescent = False):
+        '''
+        Parameters
+        ----------
+        time : float
+            A time (in the timebasis used in the experiment's Timeline.mat).
+        include_quiescent : bool, optional
+            Whether to consider the quiescent period. The default is False.
+
+
+        Returns
+        -------
+        occuring : bool
+            True if trial is occuring at time else false.
+
+        '''
+        
+        if all((include_quiescent, time > self.start_trial, time < self.end_trial)):
+            return True
+        elif time>self.start_stimulus and time<self.end_response:
+                return True
+        else:
+            return False
     def __repr__(self):
-        trialtype = TRIALTYPE[self.stim_id]
+        trialtype = GLOBALS.TRIALTYPE[self.stim_id]
         response = 'correct' if self.correct else 'incorrect'
         return f'{trialtype} trial with {response} response'
     def plot(self):

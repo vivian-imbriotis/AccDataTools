@@ -7,9 +7,9 @@ Created on Tue Jun 23 13:15:20 2020
 
 from accdatatools.Observations.recordings import Recording
 from accdatatools.Observations.trials import get_trials_in_recording
-from accdatatools.Timing.synchronisation import get_frame_times, get_lick_state_by_frame
+from accdatatools.Timing.synchonisation import get_neural_frame_times, get_lick_state_by_frame
 from accdatatools.Utils.map_across_dataset import apply_to_all_one_plane_recordings
-from accdatatools.Utils.convinence import item
+from accdatatools.Utils.convienience import item
 
 from rastermap.mapping import Rastermap
 
@@ -50,7 +50,7 @@ class ExperimentFigure:
                                       [s for s in os.listdir(exp_path) if 'Timeline.mat' in s]))
         
         print("Fetching Frame Times...")
-        frame_times = get_frame_times(timeline_path, self.recording.ops["nframes"])
+        frame_times = get_neural_frame_times(timeline_path, self.recording.ops["nframes"])
         print("Fetching licking information...")
         self.licks = get_lick_state_by_frame(timeline_path, frame_times)
         print("Aligning frames with trials...")
@@ -101,7 +101,8 @@ class NeuropilExperimentFigure(ExperimentFigure):
     def __init__(self,exp_path):
         seaborn.set_style("dark")
         print(f"Loading data from {exp_path}")
-        self.trials, self.recording = get_trials_in_recording(exp_path, return_se=True)
+        self.trials, self.recording = get_trials_in_recording(exp_path, return_se=True,
+                                                              ignore_dprime=True)
         print("Running rastermap on fluorescence data")
         r = Rastermap()
         r.fit(self.recording.Fneu)
@@ -113,7 +114,7 @@ class NeuropilExperimentFigure(ExperimentFigure):
                                       [s for s in os.listdir(exp_path) if 'Timeline.mat' in s]))
         
         print("Fetching Frame Times...")
-        frame_times = get_frame_times(timeline_path, self.recording.ops["nframes"])
+        frame_times = get_neural_frame_times(timeline_path, self.recording.ops["nframes"])
         print("Fetching licking information...")
         self.licks = get_lick_state_by_frame(timeline_path, frame_times)
         print("Aligning frames with trials...")
@@ -123,5 +124,5 @@ class NeuropilExperimentFigure(ExperimentFigure):
 
 if __name__=="__main__":
     fig = NeuropilExperimentFigure(
-        "E:/Local_Repository/CFEB026/2016-09-21_05_CFeb026")
+        "H:/Local_Repository/CFEB027/2016-10-07_03_CFEB027")
     fig.show()
