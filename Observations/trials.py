@@ -30,13 +30,120 @@ from accdatatools.DataCleaning.determine_dprime import calc_d_prime
 from accdatatools.Timing.synchonisation import get_neural_frame_times,get_lick_state_by_frame
 from accdatatools.Observations.recordings import Recording
 
-
-
-class Trial:
+class SparseTrial:
     '''
-    Encapusulates a single trial event.
-    '''
+    A trial object without the informations from the various datastreams,
+    containing only the trial's attributes. Neglects information about the
+    dF/F of neurons, licking information, and pupil activity that occured
+    during the trial.
     
+    Parameters
+    ----------
+    struct : scipy mat_struct object
+        The structs contained in each experiment's psychstim.mat file within
+        the stims array.
+    tolerant : bool, optional
+        Whether to accept structs missing some field. Avoid using this as much
+        as possible, since it might break other code, but sometimes you
+        need information about trials that are missing fields like correct
+        or StartTime. The default is False.
+    '''
+    def __init__(self,struct,tolerant = False):
+        self.complete       = True #The object is complete until a field is missing
+        self.stim_id        = struct.stimID
+        self.istest         = self.stim_id in {GLOBALS.TESTLEFT, GLOBALS.TESTRIGHT}
+        self.isleft         = self.stim_id in GLOBALS.LEFT
+        self.isright        = self.stim_id in GLOBALS.RIGHT
+        self.isgo           = self.stim_id in GLOBALS.GO
+        try:
+            self.correct        = struct.correct
+        except AttributeError as e:
+            if tolerant:
+                self.correct = None
+            else:
+                raise e
+        self.affirmative    = ((self.correct and self.isgo) or 
+                               (not self.correct and not self.isgo))
+        try:
+            self.contrast        = struct.stimAttributes.contrast
+        except AttributeError as e:
+            if tolerant:
+                self.contrast = None
+            else:
+                raise e
+        try:
+            #Get absolute timing information
+            self.start_trial    = struct.timing.StartTrial
+            self.start_stimulus = struct.timing.StimulusStart
+            self.start_response = struct.timing.ResponseStart
+            self.end_response   = struct.timing.ResponseEnd
+            self.end_trial      = struct.timing.EndClearDelay
+            
+            #Get some relative timing as sugar
+            self.rel_start_stim = self.start_stimulus - self.start_trial
+            self.rel_start_resp = self.start_response - self.start_trial
+            self.rel_end_resp   = self.end_response   - self.start_trial
+            self.duration       = self.end_trial      - self.start_trial
+            
+        except AttributeError as e:
+            if tolerant:
+                self.complete = False
+                self.start_trial    = None
+                self.start_stimulus = None
+                self.start_response = None
+                self.end_response   = None
+                self.end_trial      = None
+                self.rel_start_stim = None
+                self.rel_start_resp = None
+                self.rel_end_resp   = None
+                self.duration       = None
+            else:
+                raise e
+        
+    def is_occuring(self, time, include_quiescent = False):
+        '''
+        Parameters
+        ----------
+        time : float
+            A time (in the timebasis used in the experiment's Timeline.mat).
+        include_quiescent : bool, optional
+            Whether to consider the quiescent period. The default is False.
+
+
+        Returns
+        -------
+        occuring : bool
+            True if trial is occuring at time else false.
+
+        '''
+        
+        if all((include_quiescent, time > self.start_trial, time < self.end_trial)):
+            return True
+        elif time>self.start_stimulus and time<self.end_response:
+                return True
+        else:
+            return False
+    def to_dict(self):
+        return {
+            'test': self.istest,
+            'go': self.isgo,
+            'side': 'left' if self.isleft else ('right' if self.isright else 'unknown'),
+            'correct': self.correct,
+            'affirmative': self.affirmative,
+            'contrast':self.contrast,
+            'rel_start_stim': self.rel_start_stim,
+            "rel_start_resp": self.rel_start_resp,
+            "rel_end_resp": self.rel_end_resp,
+            "trial_duration": self.duration
+            }
+
+
+class Trial(SparseTrial):
+    '''
+    Encapusulates a single trial event. Contains information about the
+    dF/F of neurons, licking information, and pupil activity that occured
+    during the trial.
+    '''
     
     def __init__(self,exp_path,struct,statistic_extractor,frame_times,
                  licks):
@@ -45,26 +152,9 @@ class Trial:
             self.exp_path  = exp_path
         else: 
             raise ValueError('recording must be an existing directory')
-        self.stim_id        = struct.stimID
-        self.isleft         = self.stim_id in GLOBALS.LEFT
-        self.isright        = self.stim_id in GLOBALS.RIGHT
-        self.isgo           = self.stim_id in GLOBALS.GO
-        self.correct        = struct.correct
-        self.affirmative    = ((self.correct and self.isgo) or 
-                               (not self.correct and not self.isgo))
-        self.contrast       = struct.stimAttributes.contrast
-        #Get absolute timing information
-        self.start_trial    = struct.timing.StartTrial
-        self.start_stimulus = struct.timing.StimulusStart
-        self.start_response = struct.timing.ResponseStart
-        self.end_response   = struct.timing.ResponseEnd
-        self.end_trial      = struct.timing.EndClearDelay
         
-        #Get some relative timing as sugar
-        self.rel_start_stim = self.start_stimulus - self.start_trial
-        self.rel_start_resp = self.start_response - self.start_trial
-        self.rel_end_resp   = self.end_response   - self.start_trial
-        self.duration       = self.end_trial      - self.start_trial
+        #Get all the trial attributes and timing information via inheritance
+        super().__init__(struct)
         
         #Get the df/f, deconvoluted firing, and licking
         #traces of ROIs during the trial (licking info is shared
@@ -93,29 +183,14 @@ class Trial:
         return (all_traces[:,start_idx:end_idx], all_spks[:,start_idx:end_idx],
                 licks[start_idx:end_idx])
         
-    def is_occuring(self, time, include_quiescent = False):
-        '''
-        Parameters
-        ----------
-        time : float
-            A time (in the timebasis used in the experiment's Timeline.mat).
-        include_quiescent : bool, optional
-            Whether to consider the quiescent period. The default is False.
-
-
-        Returns
-        -------
-        occuring : bool
-            True if trial is occuring at time else false.
-
-        '''
-        
-        if all((include_quiescent, time > self.start_trial, time < self.end_trial)):
-            return True
-        elif time>self.start_stimulus and time<self.end_response:
-                return True
-        else:
-            return False
+    def to_dict(self):
+        result = super.to_dict()
+        result.update(
+            {"dF_on_F": self.dF_on_F,
+            "lick_rate": self.licks,
+            'Trial_ID':self.trial_id,}
+            )
+        return result
     def __repr__(self):
         trialtype = GLOBALS.TRIALTYPE[self.stim_id]
         response = 'correct' if self.correct else 'incorrect'

@@ -28,22 +28,37 @@ def no_of_planes(experiment_path):
         for file in os.listdir(os.path.join(experiment_path,"suite2p")):
             if file[:-1] == "plane":
                 count +=1
-        if count!=1:
-            print(f"{experiment_path} has non-singulate plane!")
         return count
-    except NotADirectoryError:
+    except (NotADirectoryError, FileNotFoundError):
         return 0
 
-def apply_to_all_one_plane_recordings(drive,func):
+def apply_to_all_one_plane_recordings(drive,func,verbose=False):
     root = os.path.join(drive, 'Local_Repository')
     for animal in os.listdir(root):
         animal_path = os.path.join(root,animal)
         if os.path.isdir(animal_path):
-            print(f"Processing {animal} experiments")
+            if verbose: print(f"Processing {animal} experiments")
             for recording in os.listdir(animal_path):
                 try:
                     rec_path = os.path.join(animal_path,recording)
                     if os.path.isdir(rec_path) and no_of_planes(rec_path) == 1:
                         func(rec_path)
                 except (FileNotFoundError,ValueError) as e:
-                    print(f"{e}: {recording} not to spec; passing over it...")
+                    if verbose:
+                        print(
+                            f"LOG: {func.__name__} on {recording} resulted in {e}"
+                            )
+
+
+def apply_to_all_recordings(drive,func,verbose=False):
+    root = os.path.join(drive, 'Local_Repository')
+    for animal in os.listdir(root):
+        animal_path = os.path.join(root,animal)
+        if os.path.isdir(animal_path):
+            if verbose: print(f"Processing {animal} experiments")
+            for recording in os.listdir(animal_path):
+                try:
+                    rec_path = os.path.join(animal_path,recording)
+                    func(rec_path)
+                except (FileNotFoundError,ValueError) as e:
+                    if verbose: print(f"LOG: {func.__name__} on {recording} resulted in {e}")

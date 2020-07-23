@@ -182,6 +182,7 @@ class FittedEyeShape:
         return self.valid
 
 class FittedEllipse:
+    min_points = 6
     def __init__(self,*args):
         '''
         A least-squares fitted ellipse.
@@ -218,9 +219,8 @@ class FittedEllipse:
             x = args[0]
             y = args[1]
         #Require at least 6 points#
-        if x.shape[0]<6:
-            raise np.linalg.LinAlgError("Insufficient data for fitting ellipse")
-        
+        if x.shape[0]<self.min_points:
+            raise np.linalg.LinAlgError(f"Insufficient data for fitting ellipse, {self.min_points} required, received {x.shape[0]}")
         #The general form of a conic is Ax**2 + By**2 + Cx + Dy + E == 0
         D=np.hstack([x*x,x*y,y*y,x,y,np.ones(x.shape)])
         #But we can't just least-squares solve this matrix equation, because
@@ -266,7 +266,7 @@ class FittedEllipse:
                     radius_vertical*2.,
                     self.angle)
         self.points=ell.get_verts()
-    
+        self.sum_of_squares_error = self.get_mean_squared_error(xy)
     def plot(self, axis = None, color='blue'):
         '''
         Plot the ellipse , or add the ellipse to an existing plot
@@ -294,6 +294,15 @@ class FittedEllipse:
                       color= color,
                       label = "Fitted Ellipse")
             return artist
+    def squared_error(self,pt):
+        dist_2 = np.sum((pt - self.points)**2, axis=1)
+        return np.min(dist_2)
+    def get_mean_squared_error(self,pts):
+        error = 0
+        for point in pts:
+            error += self.squared_error(point)
+        return np.sqrt(error/pts.shape[0])
+        
     def __repr__(self):
         return f"Fitted ellipse: area={self.area:.2f} angle={self.angle:.0f}°"
     
@@ -550,11 +559,11 @@ def get_pupil_size_at_each_eyecam_frame(h5_path):
 
 
 if __name__=="__main__":
-    # im = unit_test_data(
-    #     "C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/labeled-data/2017-03-30_01_CFEB045_eye/CollectedData_viviani.csv")
+    im = unit_test_data(
+        "C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/labeled-data/2017-03-30_01_CFEB045_eye/CollectedData_viviani.csv")
     
-    res = get_pupil_size_over_time("C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/videos/"+
-                                   "2016-05-28_02_CFEB014_eyeDLC_resnet50_micepupilsJul9shuffle1_1030000.h5")
-    res_outlier_removed = reject_outliers(res)
-    plt.plot(np.array(list(range(len(res_outlier_removed))))/30,res_outlier_removed)
-    plt.show()
+    # res = get_pupil_size_over_time("C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/videos/"+
+    #                                "2016-05-28_02_CFEB014_eyeDLC_resnet50_micepupilsJul9shuffle1_1030000.h5")
+    # res_outlier_removed = reject_outliers(res)
+    # plt.plot(np.array(list(range(len(res_outlier_removed))))/30,res_outlier_removed)
+    # plt.show()

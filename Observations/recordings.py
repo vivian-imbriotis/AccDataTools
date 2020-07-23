@@ -27,10 +27,10 @@ class Recording:
         self.stat = np.load("stat.npy", allow_pickle = True)
         self.ops  = np.load("ops.npy", allow_pickle = True).item()
         self.F    = np.load("F.npy")
-        #this is hacky garbage, fix it
+        #Sometimes small values are negative which messes with division by F0
         self.F    = np.abs(self.F)
         self.Fneu = np.load("Fneu.npy")
-        #this too
+        #same here
         self.Fneu = np.abs(self.Fneu)
 
         #Calculate deltaF/F

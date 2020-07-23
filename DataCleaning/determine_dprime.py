@@ -9,7 +9,7 @@ NOGO      = {NOGOLEFT, NOGORIGHT}
 
 __debug = False
 from accdatatools.Utils.deeploadmat import loadmat
-import accdatatools.Utils.acc_path_tools as p
+import accdatatools.Utils.path as p
 from scipy.stats import norm
 from sys import float_info
 import numpy as np
