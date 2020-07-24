@@ -4,19 +4,24 @@ Created on Wed Jun 24 14:07:54 2020
 
 @author: Vivian Imbriotis
 """
+import os
 
-
-from DataCleaning.add_time_since_lick import lick_transform
-from DataCleaning.automate_s2p import apply_to_all_one_plane_recordings
-from trial_extraction import get_trials_in_recording, get_frame_times, item, get_lick_state_by_frame
 import numpy  as np
 import pandas as pd
-import os
+
+
+from accdatatools.ProcessLicking.kernel import lick_transform
+from accdatatools.Utils.map_across_dataset import apply_to_all_one_plane_recordings
+from accdatatools.Observations.trials import get_trials_in_recording
+from accdatatools.Observations.recordings import Recording
+from accdatatools.Utils.convienience import item
+from accdatatools.Timing.synchonisation import get_neural_frame_times, get_lick_state_by_frame
+
 
 class RecordingUnroller(Recording):
     def __init__(self,exp_path,ignore_dprime=False):
         self.exp_path = exp_path
-        super().__init__()
+        super().__init__(os.path.join(exp_path,"suite2p","plane0"))
         self.trials = get_trials_in_recording(exp_path, 
                                               return_se=False,
                                               se = self,
@@ -26,14 +31,12 @@ class RecordingUnroller(Recording):
                                   item(
                                       [s for s in os.listdir(exp_path) if 'Timeline.mat' in s]))
         
-        self.frame_times = get_frame_times(timeline_path, self.se.ops["nframes"])
+        self.frame_times = get_neural_frame_times(timeline_path, self.ops["nframes"])
         #Now  we somehow need to get this into a continuous time series.
         self.trialtime, self.iscorrect, self.side, self.isgo, self.trial_id = self.get_timeseries()
         self.licks = get_lick_state_by_frame(timeline_path, self.frame_times)
         #This licks is the bool series, we want the deltaT series
         self.licks = lick_transform(self.licks)
-        self.dF_on_F = self.se.dF_on_F
-        self.spks    = self.se.spks
         
 
     def get_timeseries(self):
@@ -41,11 +44,11 @@ class RecordingUnroller(Recording):
         end_times   = start_times + 5
         start_idxs  = self.frame_times.searchsorted(start_times)
         end_idxs    = self.frame_times.searchsorted(end_times)
-        trial_s = np.zeros(self.se.ops["nframes"])
-        corre_s = np.full(self.se.ops["nframes"],-1)
-        side_s  = np.full(self.se.ops["nframes"],'NA',dtype = object)
-        isgo_s  = np.full(self.se.ops["nframes"],-1)
-        id_s = np.full(self.se.ops["nframes"],"NA", dtype= object)
+        trial_s = np.ones(self.ops["nframes"])*(-999)
+        corre_s = np.full(self.ops["nframes"],-1)
+        side_s  = np.full(self.ops["nframes"],'NA',dtype = object)
+        isgo_s  = np.full(self.ops["nframes"],-1)
+        id_s = np.full(self.ops["nframes"],"NA", dtype= object)
         
         for idx,(trial, start_idx, end_idx) in enumerate(zip(self.trials, start_idxs, end_idxs)):
             trial_id = self.exp_path.split("\\")[-1] + f" {idx}"
@@ -78,10 +81,10 @@ class RecordingUnroller(Recording):
                             'side': side,
                             'correct': correct,
                             "time": frametime,
-                            "trial_time": trialtime,
+                            "trial_factor": trialtime,
                             "dF_on_F": df,
                             "spks": spk,
-                            "lick": lick
+                            "lick_factor": lick
                             }
                             )
         return results
@@ -107,6 +110,6 @@ if __name__=="__main__":
     #Reopen in append mode and append each experiment
     csv = open("C:/Users/Vivian Imbriotis/Desktop/dataset.csv", 'a')
     func = lambda path:append_recording_to_csv(csv,path,True)
-    apply_to_all_one_plane_recordings("E:\\", func)
+    # apply_to_all_one_plane_recordings("E:\\", func)
+    func("D:\\Local_Repository\\CFEB026\\2016-09-21_05_CFeb026")
     csv.close()
-    pass

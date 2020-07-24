@@ -1,0 +1,355 @@
+CLASS 0 with pooled stats (Count=12292.0, Acc=76%, Sen=69%, Spe=88%, D'=1.7, test=5%, left=50%, go=48%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast=1.0
+    go
+            0 (Count=6446.0, Acc=62%, Sen=0%, Spe=100%, D'=NA, test=9%, left=50%, go=0%)
+            1 (Count=5846.0, Acc=91%, Sen=100%, Spe=0%, D'=NA, test=0%, left=50%, go=100%)
+    side
+        left  (Count=6147.0, Acc=77%, Sen=70%, Spe=89%, D'=1.7, test=5%, left=100%, go=48%)
+        right (Count=6145.0, Acc=75%, Sen=68%, Spe=88%, D'=1.6, test=5%, left=0%, go=48%)
+    task=bGoNoGoLickAdapt
+    test
+            0 (Count=11699.0, Acc=76%, Sen=70%, Spe=87%, D'=1.6, test=0%, left=50%, go=50%)
+            1 (Count=593.0, Acc=83%, Sen=0%, Spe=100%, D'=NA, test=100%, left=50%, go=0%)
+This class contained the following 45 recordings:
+    2016-05-31_02_CFEB013 (1 plane)    2016-06-03_02_CFEB013 (? plane)    2016-05-27_02_CFEB014 (? plane)
+    2016-05-28_02_CFEB014 (1 plane)    2016-09-21_05_CFeb026 (1 plane)    2016-09-23_02_CFEB026 (1 plane)
+    2016-09-25_01_CFEB026 (1 plane)    2016-09-30_01_CFEB027 (? plane)    2016-09-30_02_CFEB027 (? plane)
+    2016-10-05_01_CFEB027 (? plane)    2016-10-06_05_CFEB027 (? plane)    2016-10-07_03_CFEB027 (1 plane)
+    2016-10-10_04_CFEB027 (? plane)    2016-10-11_05_CFEB027 (? plane)    2016-10-13_03_CFEB027 (? plane)
+    2016-10-14_03_CFEB027 (? plane)    2016-10-17_03_CFEB027 (? plane)    2016-10-18_01_CFEB027 (? plane)
+    2016-10-21_03_CFEB027 (1 plane)    2016-10-22_03_CFEB027 (? plane)    2016-10-24_03_CFEB027 (? plane)
+    2016-10-25_04_CFEB027 (1 plane)    2016-10-05_01_CFEB029 (? plane)    2016-10-06_01_CFEB029 (? plane)
+    2016-10-09_03_CFEB029 (? plane)    2016-10-10_03_CFEB029 (1 plane)    2016-10-13_02_CFEB029 (? plane)
+    2016-10-14_01_CFEB029 (? plane)    2016-10-15_01_CFEB029 (? plane)    2016-10-17_03_CFEB029 (? plane)
+    2016-10-19_03_CFEB029 (? plane)    2016-10-21_03_CFEB029 (? plane)    2016-10-24_03_CFEB029 (1 plane)
+    2016-10-25_03_CFEB029 (? plane)    2016-10-26_03_CFEB029 (? plane)    2016-11-26_01_CFEB033 (? plane)
+    2016-12-09_03_CFEB033 (? plane)    2016-12-15_01_CFEB033 (1 plane)    2016-12-16_01_CFEB033 (1 plane)
+    2016-12-17_01_CFEB033 (1 plane)    2016-12-18_01_CFEB033 (? plane)    2016-12-19_01_CFEB033 (? plane)
+    2016-12-09_01_CFEB035 (? plane)    2016-12-16_01_CFEB035 (? plane)    2016-12-17_01_CFEB035 (1 plane)
+
+
+
+CLASS 1 with pooled stats (Count=4107.0, Acc=71%, Sen=45%, Spe=86%, D'=1.0, test=25%, left=50%, go=25%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast
+          0.1 (Count=2053.0, Acc=66%, Sen=66%, Spe=65%, D'=0.8, test=0%, left=50%, go=50%)
+          0.5 (Count=2054.0, Acc=77%, Sen=0%, Spe=100%, D'=NA, test=50%, left=50%, go=0%)
+    go
+            0 (Count=3079.0, Acc=74%, Sen=0%, Spe=100%, D'=NA, test=33%, left=50%, go=0%)
+            1 (Count=1028.0, Acc=64%, Sen=100%, Spe=0%, D'=NA, test=0%, left=50%, go=100%)
+    side
+        left  (Count=1539.0, Acc=87%, Sen=93%, Spe=85%, D'=2.5, test=33%, left=100%, go=33%)
+        right (Count=1543.0, Acc=58%, Sen=42%, Spe=75%, D'=0.5, test=33%, left=0%, go=33%)
+        unknown (Count=1025.0, Acc=67%, Sen=0%, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+    task=bGoNoGoLickFull
+    test
+            0 (Count=3079.0, Acc=69%, Sen=53%, Spe=80%, D'=0.9, test=0%, left=50%, go=33%)
+            1 (Count=1028.0, Acc=79%, Sen=0%, Spe=100%, D'=NA, test=100%, left=50%, go=0%)
+This class contained the following 15 recordings:
+    2016-06-29_02_CFEB013 (1 plane)    2016-07-05_03_CFEB014 (1 plane)    2016-09-29_06_CFEB026 (1 plane)
+    2016-10-11_03_CFEB026 (1 plane)    2016-10-22_01_CFEB026 (1 plane)    2016-10-27_01_CFEB027 (? plane)
+    2016-11-01_03_CFEB027 (1 plane)    2016-11-05_03_CFEB027 (1 plane)    2016-11-07_03_CFEB027 (? plane)
+    2016-11-03_03_CFEB029 (? plane)    2016-11-04_05_CFEB029 (1 plane)    2016-11-05_03_CFEB029 (1 plane)
+    2016-11-07_03_CFEB029 (? plane)    2016-11-08_03_CFEB029 (? plane)    2016-11-09_04_CFEB029 (? plane)
+
+
+
+CLASS 2 with pooled stats (Count=897.0, Acc=77%, Sen=32%, Spe=96%, D'=1.4, test=37%, left=50%, go=12%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast=1.0
+    go
+            0 (Count=785.0, Acc=76%, Sen=0%, Spe=100%, D'=NA, test=43%, left=50%, go=0%)
+            1 (Count=112.0, Acc=80%, Sen=100%, Spe=0%, D'=NA, test=0%, left=49%, go=100%)
+    side
+        left  (Count=392.0, Acc=91%, Sen=63%, Spe=98%, D'=2.5, test=43%, left=100%, go=14%)
+        right (Count=394.0, Acc=64%, Sen=24%, Spe=93%, D'=0.8, test=43%, left=0%, go=14%)
+        unknown (Count=111.0, Acc=69%, Sen=0%, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+    task=bGoNoGoLickFull
+    test
+            0 (Count=562.0, Acc=72%, Sen=40%, Spe=93%, D'=1.3, test=0%, left=50%, go=20%)
+            1 (Count=335.0, Acc=85%, Sen=0%, Spe=100%, D'=NA, test=100%, left=50%, go=0%)
+This class contained the following 3 recordings:
+    2016-11-13_03_CFEB027 (? plane)    2016-11-12_03_CFEB029 (? plane)    2016-11-13_03_CFEB029 (? plane)
+
+
+
+CLASS 3 with pooled stats (Count=1038.0, Acc=84%, Sen=31%, Spe=95%, D'=1.2, test=27%, left=100%, go=10%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast
+          0.0 (Count=657.0, Acc=98%, Sen=0%, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+          1.0 (Count=381.0, Acc=59%, Sen=34%, Spe=81%, D'=0.5, test=74%, left=100%, go=26%)
+    go
+            0 (Count=939.0, Acc=86%, Sen=0%, Spe=100%, D'=NA, test=30%, left=100%, go=0%)
+            1 (Count=99.0, Acc=62%, Sen=100%, Spe=0%, D'=NA, test=0%, left=100%, go=100%)
+    side
+        left  (Count=381.0, Acc=59%, Sen=34%, Spe=81%, D'=0.5, test=74%, left=100%, go=26%)
+        unknown (Count=657.0, Acc=98%, Sen=0%, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+    task=bGoNoGoLickAdaptOne
+    test
+            0 (Count=756.0, Acc=93%, Sen=80%, Spe=94%, D'=2.4, test=0%, left=100%, go=13%)
+            1 (Count=282.0, Acc=58%, Sen=0%, Spe=100%, D'=NA, test=100%, left=100%, go=0%)
+This class contained the following 5 recordings:
+    2017-01-15_01_CFEB037 (1 plane)    2017-01-15_01_CFEB040 (1 plane)    2017-03-09_02_CFEB042 (1 plane)
+    2017-03-09_02_CFEB044 (1 plane)    2017-03-23_04_CFEB045 (1 plane)
+
+
+CLASS 4 with pooled stats (Count=7494.0, Acc=80%, Sen=74%, Spe=87%, D'=1.8, test=3%, left=100%, go=49%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast=1.0
+    go
+            0 (Count=3819.0, Acc=71%, Sen=0%, Spe=100%, D'=NA, test=6%, left=100%, go=0%)
+            1 (Count=3675.0, Acc=89%, Sen=100%, Spe=0%, D'=NA, test=0%, left=100%, go=100%)
+    side=left
+    task=bGoNoGoLickAdaptOne
+    test
+            0 (Count=7275.0, Acc=80%, Sen=75%, Spe=86%, D'=1.8, test=0%, left=100%, go=51%)
+            1 (Count=219.0, Acc=76%, Sen=0%, Spe=100%, D'=NA, test=100%, left=100%, go=0%)
+This class contained the following 31 recordings:
+    2017-01-17_01_CFEB037 (1 plane)    2017-01-27_01_CFEB037 (1 plane)    2017-01-28_01_CFEB037 (1 plane)
+    2017-01-30_01_CFEB037 (1 plane)    2017-02-08_02_CFEB037 (1 plane)    2017-02-09_01_CFEB037 (1 plane)
+    2017-02-13_05_CFEB037 (1 plane)    2017-02-14_01_CFEB037 (1 plane)    2017-01-23_01_CFEB040 (1 plane)
+    2017-01-27_01_CFEB040 (1 plane)    2017-02-08_01_CFEB040 (1 plane)    2017-02-09_01_CFEB040 (1 plane)
+    2017-02-13_01_CFEB040 (1 plane)    2017-01-15_01_CFEB041 (1 plane)    2017-01-17_01_CFEB041 (1 plane)
+    2017-01-28_01_CFEB041 (1 plane)    2017-01-30_01_CFEB041 (1 plane)    2017-01-31_01_CFEB041 (1 plane)
+    2017-02-08_01_CFEB041 (1 plane)    2017-02-09_01_CFEB041 (1 plane)    2017-02-14_01_CFEB041 (1 plane)
+    2017-03-17_01_CFEB042 (1 plane)    2017-03-20_01_CFEB042 (1 plane)    2017-03-28_01_CFEB042 (1 plane)
+    2017-03-29_01_CFEB042 (1 plane)    2017-03-30_01_CFEB042 (1 plane)    2017-03-23_01_CFEB044 (1 plane)
+    2017-03-28_01_CFEB045 (1 plane)    2017-03-29_01_CFEB045 (1 plane)    2017-03-30_01_CFEB045 (1 plane)
+    2017-04-03_01_CFEB045 (1 plane)
+
+
+CLASS 5 with pooled stats (Count=575.0, Acc=NA, Sen=NA, Spe=NA, D'=NA, test=100%, left=100%, go=0%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast=Unspecified
+    go=False
+    side=left
+    task=DriftGrating1
+    test=True
+This class contained the following 21 recordings:
+    2017-02-14_02_CFEB037 (? plane)    2017-02-04_02_CFEB040 (? plane)    2017-02-13_02_CFEB040 (? plane)
+    2017-02-14_02_CFEB041 (? plane)    2017-03-23_02_CFEB042 (? plane)    2017-03-28_04_CFEB042 (? plane)
+    2017-03-29_02_CFEB042 (? plane)    2017-03-30_02_CFEB042 (? plane)    2017-03-23_02_CFEB044 (? plane)
+    2017-03-30_02_CFEB045 (? plane)    2018-04-26_03_CFEB105 (? plane)    2018-04-26_02_CFEB106 (? plane)
+    2018-06-01_02_CFEB107 (? plane)    2018-06-01_02_CFEB108 (? plane)    2018-10-03_03_CFEB127 (? plane)
+    2018-10-04_03_CFEB127 (5 plane)    2018-10-04_05_CFEB128 (5 plane)    2018-10-03_02_CFEB130 (? plane)
+    2018-10-04_03_CFEB130 (5 plane)    2018-11-03_03_CFEB133 (5 plane)    2018-11-03_03_CFEB134 (5 plane)
+
+
+
+CLASS 6 with pooled stats (Count=142422.0, Acc=NA, Sen=NA, Spe=NA, D'=NA, test=1%, left=50%, go=1%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast=Unspecified
+    go
+            0 (Count=141084.0, Acc=NA, Sen=NA, Spe=NA, D'=NA, test=1%, left=50%, go=0%)
+            1 (Count=1338.0, Acc=NA, Sen=NA, Spe=NA, D'=NA, test=0%, left=50%, go=100%)
+    side
+        left  (Count=2007.0, Acc=NA, Sen=NA, Spe=NA, D'=NA, test=33%, left=100%, go=33%)
+        right (Count=2007.0, Acc=NA, Sen=NA, Spe=NA, D'=NA, test=33%, left=0%, go=33%)
+        unknown (Count=138408.0, Acc=NA, Sen=NA, Spe=NA, D'=NA, test=0%, left=NA, go=0%)
+    task=DriftGrating1
+    test
+            0 (Count=141084.0, Acc=NA, Sen=NA, Spe=NA, D'=NA, test=0%, left=50%, go=1%)
+            1 (Count=1338.0, Acc=NA, Sen=NA, Spe=NA, D'=NA, test=100%, left=50%, go=0%)
+This class contained the following 50 recordings:
+    2017-03-07_01_CFEB042 (? plane)    2018-04-17_01_CFEB105 (5 plane)    2018-04-19_01_CFEB105 (5 plane)
+    2018-04-24_03_CFEB105 (5 plane)    2018-04-16_01_CFEB106 (? plane)    2018-04-16_02_CFEB106 (? plane)
+    2018-04-16_03_CFEB106 (? plane)    2018-04-17_03_CFEB106 (5 plane)    2018-04-19_01_CFEB106 (5 plane)
+    2018-04-23_01_CFEB106 (5 plane)    2018-04-24_02_CFEB106 (5 plane)    2018-05-23_03_CFEB107 (5 plane)
+    2018-05-24_01_CFEB107 (5 plane)    2018-05-29_01_CFEB107 (5 plane)    2018-05-23_05_CFEB108 (5 plane)
+    2018-05-24_01_CFEB108 (5 plane)    2018-05-29_01_CFEB108 (5 plane)    2018-06-16_03_CFEB125 (? plane)
+    2018-06-16_04_CFEB125 (5 plane)    2018-06-17_01_CFEB126 (5 plane)    2018-06-17_02_CFEB126 (5 plane)
+    2018-09-18_01_CFEB127 (? plane)    2018-09-18_02_CFEB127 (? plane)    2018-09-19_02_CFEB127 (? plane)
+    2018-09-19_03_CFEB127 (? plane)    2018-09-26_01_CFEB127 (5 plane)    2018-09-26_02_CFEB127 (5 plane)
+    2018-09-27_01_CFEB127 (? plane)    2018-09-27_02_CFEB127 (? plane)    2018-10-01_01_CFEB127 (? plane)
+    2018-10-15_01_CFEB127 (? plane)    2018-09-27_01_CFEB128 (5 plane)    2018-09-27_02_CFEB128 (5 plane)
+    2018-09-17_01_CFEB130 (? plane)    2018-09-17_02_CFEB130 (? plane)    2018-09-18_01_CFEB130 (? plane)
+    2018-09-18_02_CFEB130 (? plane)    2018-09-18_03_CFEB130 (? plane)    2018-09-18_04_CFEB130 (? plane)
+    2018-09-18_05_CFEB130 (? plane)    2018-09-18_06_CFEB130 (? plane)    2018-09-18_07_CFEB130 (? plane)
+    2018-09-25_01_CFEB130 (5 plane)    2018-09-25_02_CFEB130 (5 plane)    2018-10-01_01_CFEB130 (? plane)
+    2018-10-01_02_CFEB130 (? plane)    2018-10-31_07_CFEB133 (5 plane)    2018-10-31_08_CFEB133 (5 plane)
+    2018-11-01_03_CFEB134 (5 plane)    2018-11-01_05_CFEB134 (5 plane)
+
+
+CLASS 7 with pooled stats (Count=808.0, Acc=89%, Sen=94%, Spe=41%, D'=1.3, test=0%, left=9%, go=91%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast=0.0
+    go
+            0 (Count=75.0, Acc=37%, Sen=0%, Spe=100%, D'=NA, test=0%, left=100%, go=0%)
+            1 (Count=733.0, Acc=95%, Sen=100%, Spe=0%, D'=NA, test=0%, left=0%, go=100%)
+    side
+        left  (Count=75.0, Acc=37%, Sen=0%, Spe=100%, D'=NA, test=0%, left=100%, go=0%)
+        right (Count=733.0, Acc=95%, Sen=100%, Spe=0%, D'=NA, test=0%, left=0%, go=100%)
+    task=bDetect
+    test=False
+This class contained the following 15 recordings:
+    2018-04-26_01_CFEB105 (? plane)    2018-04-26_01_CFEB106 (? plane)    2018-06-01_01_CFEB107 (? plane)
+    2018-06-01_01_CFEB108 (? plane)    2018-10-03_02_CFEB127 (? plane)    2018-10-04_01_CFEB127 (? plane)
+    2018-10-04_02_CFEB127 (5 plane)    2018-10-05_01_CFEB127 (? plane)    2018-10-04_04_CFEB128 (5 plane)
+    2018-10-03_01_CFEB130 (? plane)    2018-10-04_01_CFEB130 (? plane)    2018-10-04_02_CFEB130 (5 plane)
+    2018-10-05_01_CFEB130 (? plane)    2018-11-03_02_CFEB133 (5 plane)    2018-11-03_02_CFEB134 (5 plane)
+
+
+
+CLASS 8 with pooled stats (Count=1807.0, Acc=89%, Sen=94%, Spe=86%, D'=2.7, test=54%, left=52%, go=46%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast
+          0.0 (Count=838.0, Acc=81%, Sen=100%, Spe=0%, D'=NA, test=0%, left=100%, go=100%)
+          1.0 (Count=969.0, Acc=96%, Sen=0%, Spe=100%, D'=NA, test=100%, left=10%, go=0%)
+    go
+            0 (Count=969.0, Acc=96%, Sen=0%, Spe=100%, D'=NA, test=100%, left=10%, go=0%)
+            1 (Count=838.0, Acc=81%, Sen=100%, Spe=0%, D'=NA, test=0%, left=100%, go=100%)
+    side
+        left  (Count=931.0, Acc=82%, Sen=99%, Spe=35%, D'=1.9, test=10%, left=100%, go=90%)
+        right (Count=876.0, Acc=96%, Sen=0%, Spe=100%, D'=NA, test=100%, left=0%, go=0%)
+    task=bDetect
+    test
+            0 (Count=838.0, Acc=81%, Sen=100%, Spe=0%, D'=NA, test=0%, left=100%, go=100%)
+            1 (Count=969.0, Acc=96%, Sen=0%, Spe=100%, D'=NA, test=100%, left=10%, go=0%)
+This class contained the following 18 recordings:
+    2018-05-15_01_CFEB106 (? plane)    2018-10-08_02_CFEB127 (? plane)    2018-10-09_01_CFEB127 (? plane)
+    2018-10-10_01_CFEB127 (? plane)    2018-10-11_01_CFEB127 (5 plane)    2018-10-12_01_CFEB127 (? plane)
+    2018-10-15_04_CFEB127 (5 plane)    2018-10-09_02_CFEB128 (5 plane)    2018-10-10_01_CFEB128 (5 plane)
+    2018-10-09_01_CFEB130 (? plane)    2018-10-10_01_CFEB130 (? plane)    2018-10-11_01_CFEB130 (5 plane)
+    2018-10-12_01_CFEB130 (? plane)    2018-10-15_01_CFEB130 (5 plane)    2018-11-14_01_CFEB133 (5 plane)
+    2018-11-16_01_CFEB133 (5 plane)    2018-11-12_01_CFEB134 (5 plane)    2018-11-13_01_CFEB134 (5 plane)
+
+
+
+CLASS 9 with pooled stats (Count=8.0, Acc=0%, Sen=0%, Spe=0%, D'=NA, test=0%, left=62%, go=38%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast=0.0
+    go
+            0 (Count=5.0, Acc=0%, Sen=0%, Spe=NA, D'=NA, test=0%, left=100%, go=0%)
+            1 (Count=3.0, Acc=0%, Sen=NA, Spe=0%, D'=NA, test=0%, left=0%, go=100%)
+    side
+        left  (Count=5.0, Acc=0%, Sen=0%, Spe=NA, D'=NA, test=0%, left=100%, go=0%)
+        right (Count=3.0, Acc=0%, Sen=NA, Spe=0%, D'=NA, test=0%, left=0%, go=100%)
+    task=bDetect
+    test=False
+This class contained the following 1 recordings:
+    2018-10-03_01_CFEB127 (? plane)
+
+
+CLASS 10 with pooled stats (Count=228.0, Acc=57%, Sen=0%, Spe=100%, D'=NA, test=100%, left=53%, go=0%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast=1.0
+    go=False
+    side
+        left  (Count=121.0, Acc=49%, Sen=0%, Spe=100%, D'=NA, test=100%, left=100%, go=0%)
+        right (Count=107.0, Acc=65%, Sen=0%, Spe=100%, D'=NA, test=100%, left=0%, go=0%)
+    task=bDetect
+    test=True
+This class contained the following 6 recordings:
+    2018-10-05_02_CFEB127 (5 plane)    2018-10-05_03_CFEB128 (5 plane)    2018-10-05_02_CFEB130 (5 plane)
+    2018-10-07_02_CFEB130 (? plane)    2018-10-08_01_CFEB130 (? plane)    2018-11-05_02_CFEB134 (5 plane)
+
+
+
+CLASS 11 with pooled stats (Count=4.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=100%, go=0%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast=1.0
+    go=False
+    side=left
+    task=bDetect
+    test=True
+This class contained the following 1 recordings:
+    2018-10-15_02_CFEB127 (? plane)
+
+
+CLASS 12 with pooled stats (Count=16.0, Acc=100%, Sen=100%, Spe=100%, D'=inf, test=81%, left=81%, go=19%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast
+          0.0 (Count=3.0, Acc=100%, Sen=100%, Spe=NA, D'=NA, test=0%, left=100%, go=100%)
+          0.5 (Count=3.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=0%, go=0%)
+          1.0 (Count=10.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=100%, go=0%)
+    go
+            0 (Count=13.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=77%, go=0%)
+            1 (Count=3.0, Acc=100%, Sen=100%, Spe=NA, D'=NA, test=0%, left=100%, go=100%)
+    side
+        left  (Count=13.0, Acc=100%, Sen=100%, Spe=100%, D'=inf, test=77%, left=100%, go=23%)
+        right (Count=3.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=0%, go=0%)
+    task=bDetect
+    test
+            0 (Count=3.0, Acc=100%, Sen=100%, Spe=NA, D'=NA, test=0%, left=100%, go=100%)
+            1 (Count=13.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=77%, go=0%)
+This class contained the following 2 recordings:
+    2018-10-16_01_CFEB127 (? plane)    2018-10-16_02_CFEB127 (? plane)
+
+
+CLASS 13 with pooled stats (Count=84.0, Acc=76%, Sen=69%, Spe=81%, D'=1.4, test=19%, left=68%, go=38%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast
+          0.0 (Count=25.0, Acc=60%, Sen=100%, Spe=0%, D'=NA, test=0%, left=100%, go=100%)
+        0.007 (Count=6.0, Acc=0%, Sen=0%, Spe=NA, D'=NA, test=0%, left=NA, go=0%)
+        0.015 (Count=6.0, Acc=33%, Sen=0%, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+         0.03 (Count=6.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+         0.06 (Count=6.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+        0.125 (Count=6.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=0%, left=0%, go=0%)
+         0.25 (Count=6.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=0%, left=100%, go=0%)
+          0.5 (Count=13.0, Acc=100%, Sen=100%, Spe=100%, D'=inf, test=46%, left=0%, go=54%)
+          1.0 (Count=10.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=100%, go=0%)
+    go
+            0 (Count=52.0, Acc=81%, Sen=0%, Spe=100%, D'=NA, test=31%, left=57%, go=0%)
+            1 (Count=32.0, Acc=69%, Sen=100%, Spe=0%, D'=NA, test=0%, left=78%, go=100%)
+    side
+        left  (Count=41.0, Acc=76%, Sen=100%, Spe=62%, D'=inf, test=24%, left=100%, go=61%)
+        right (Count=19.0, Acc=100%, Sen=100%, Spe=100%, D'=inf, test=32%, left=0%, go=37%)
+        unknown (Count=24.0, Acc=58%, Sen=0%, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+    task=bDetect
+    test
+            0 (Count=68.0, Acc=71%, Sen=69%, Spe=72%, D'=1.1, test=0%, left=70%, go=47%)
+            1 (Count=16.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=62%, go=0%)
+This class contained the following 1 recordings:
+    2018-10-16_03_CFEB127 (? plane)
+
+
+CLASS 14 with pooled stats (Count=421.0, Acc=67%, Sen=55%, Spe=77%, D'=0.9, test=17%, left=67%, go=39%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast
+          0.0 (Count=130.0, Acc=66%, Sen=100%, Spe=0%, D'=NA, test=0%, left=100%, go=100%)
+        0.005 (Count=31.0, Acc=32%, Sen=0%, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+         0.01 (Count=31.0, Acc=42%, Sen=0%, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+        0.015 (Count=31.0, Acc=32%, Sen=0%, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+         0.02 (Count=30.0, Acc=63%, Sen=0%, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+        0.025 (Count=32.0, Acc=62%, Sen=0%, Spe=100%, D'=NA, test=0%, left=0%, go=0%)
+         0.03 (Count=30.0, Acc=73%, Sen=0%, Spe=100%, D'=NA, test=0%, left=100%, go=0%)
+        0.035 (Count=33.0, Acc=82%, Sen=100%, Spe=0%, D'=NA, test=0%, left=0%, go=100%)
+          0.5 (Count=33.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=0%, go=0%)
+          1.0 (Count=40.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=100%, go=0%)
+    go
+            0 (Count=258.0, Acc=65%, Sen=0%, Spe=100%, D'=NA, test=28%, left=52%, go=0%)
+            1 (Count=163.0, Acc=69%, Sen=100%, Spe=0%, D'=NA, test=0%, left=80%, go=100%)
+    side
+        left  (Count=200.0, Acc=74%, Sen=91%, Spe=58%, D'=1.6, test=20%, left=100%, go=65%)
+        right (Count=98.0, Acc=82%, Sen=69%, Spe=90%, D'=1.8, test=34%, left=0%, go=34%)
+        unknown (Count=123.0, Acc=42%, Sen=0%, Spe=100%, D'=NA, test=0%, left=NA, go=0%)
+    task=bDetect
+    test
+            0 (Count=348.0, Acc=59%, Sen=55%, Spe=65%, D'=0.5, test=0%, left=71%, go=47%)
+            1 (Count=73.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=55%, go=0%)
+This class contained the following 4 recordings:
+    2018-10-21_04_CFEB127 (5 plane)    2018-10-21_03_CFEB128 (5 plane)    2018-10-17_02_CFEB130 (? plane)
+    2018-11-14_01_CFEB134 (5 plane)
+
+
+CLASS 15 with pooled stats (Count=44.0, Acc=82%, Sen=100%, Spe=75%, D'=inf, test=55%, left=57%, go=45%)
+Recordings in this class have trials that vary across the following parameters:
+    contrast
+          0.0 (Count=20.0, Acc=60%, Sen=100%, Spe=0%, D'=NA, test=0%, left=100%, go=100%)
+          0.5 (Count=19.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=0%, go=0%)
+          1.0 (Count=5.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=100%, go=0%)
+    go
+            0 (Count=24.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=21%, go=0%)
+            1 (Count=20.0, Acc=60%, Sen=100%, Spe=0%, D'=NA, test=0%, left=100%, go=100%)
+    side
+        left  (Count=25.0, Acc=68%, Sen=100%, Spe=38%, D'=inf, test=20%, left=100%, go=80%)
+        right (Count=19.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=0%, go=0%)
+    task=bDetect
+    test
+            0 (Count=20.0, Acc=60%, Sen=100%, Spe=0%, D'=NA, test=0%, left=100%, go=100%)
+            1 (Count=24.0, Acc=100%, Sen=NA, Spe=100%, D'=NA, test=100%, left=21%, go=0%)
+This class contained the following 1 recordings:
+    2018-10-17_01_CFEB130 (? plane)
+
+
