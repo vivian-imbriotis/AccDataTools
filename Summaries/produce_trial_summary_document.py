@@ -127,7 +127,7 @@ def get_unique_attribute_values(df):
 
 
 
-def get_every_trial():
+def get_every_trial(root="D:\\"):
     ls = []
     planes = {}
     def func(path):
@@ -142,11 +142,11 @@ def get_every_trial():
             planes[trial_objects[-1]["recording_id"]] = plane
         except AttributeError as e:
             print(f"{e} occured at {path}")
-    apply_to_all_recordings("D:\\", func)
+    apply_to_all_recordings(root, func)
     return ls, planes
 
-def get_unique_trial_attrs_by_recording(return_df=False):
-    trials, planes = get_every_trial()
+def get_unique_trial_attrs_by_recording(root = "D:\\", return_df=False):
+    trials, planes = get_every_trial(root = root)
     df = pd.DataFrame(trials)
     recordings = {}
     for recording in df.recording_id.unique():
@@ -164,16 +164,15 @@ def simple_summary():
     with open("C:/Users/viviani/Desktop/recording_descriptions.txt","w") as f:
         for (recording,value) in zip(planes,recordings.items()):
             f.write(f"{recording}\n")
-            f.write(f"    {planes[recording]} plane{'s' if plane>1 else ''}\n")
+            f.write(f"    {planes[recording]} plane{'s' if planes[recording]>1 else ''}\n")
             for attr, array in value.items():
                 if array.shape[0]>1:
                     f.write(f"    {attr:13}{list(array)}\n")
             f.write("\n\n")
 
 
-def get_classes_of_recording():
-    
-    df, recordings, planes = get_unique_trial_attrs_by_recording(True)
+def get_classes_of_recording(root="D:\\"):
+    df, recordings, planes = get_unique_trial_attrs_by_recording(root,True)
     # recordings is a dict with keys of recording_ids and values of
     # the unique values of trial attribute (side, contrast, etc) that
     # occured in that trial.

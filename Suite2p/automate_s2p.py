@@ -5,33 +5,54 @@ Created on Sun May 10 14:45:31 2020
 @author: Vivian Imbriotis
 """
 
+from statistics import mode
+
 import numpy as np
-from sys import argv
 import os
 from suite2p.run_s2p import run_s2p, default_ops
+from accdatatools.Utils.map_across_dataset import apply_to_all_one_plane_recordings
+from accdatatools.Utils.path import exp_id
+from accdatatools.Summaries.produce_trial_summary_document import get_classes_of_recordings
 
 
-
-
-def run_s2p_on(path, ops_file=None):
+def run_s2p_on(path, ops_file=None, reprocess=False):
     db = {'data_path':path}
     if ops_file==None:
         os.path.join(path,"suite2p","plane0","ops.npy")
-    ops = np.load(ops_file,allow_pickle=True).item()
-    ops["keep_movie_raw"] #This is so we get a KeyError
-    ops["keep_movie_raw"] = True                
-    ops["connected"]
-    ops["connected"] = False
-    ops["max_overlap"]
-    ops["max_overlap"] = 0.2
-    ops["do_registration"]
-    ops["do_registration"] = 2 #ALWAYS redo registration
-    ops["look_one_level_down"]
-    ops["look_one_level_down"] = True
+    try:
+        ops = np.load(ops_file,allow_pickle=True).item()
+        ops["keep_movie_raw"] #This is so we get a KeyError
+        ops["keep_movie_raw"] = True                
+        ops["connected"]
+        ops["connected"] = False
+        ops["max_overlap"]
+        ops["max_overlap"] = 0.2
+        ops["do_registration"]
+        ops["do_registration"] = 2 #ALWAYS redo registration
+        ops["look_one_level_down"]
+        ops["look_one_level_down"] = True
+    except FileNotFoundError:
+        ops = default_ops()
+        ops["look_one_level_down"] = True
+        ops["do_registration"] = 2
+        ops["keep_movie_raw"] = True
+        ops["align_by_chan"] = 2
+        ops["nonrigid"] = False
+        ops["connected"] = False
+        ops["max_overlap"] = 0.2
+        ops["bidi_corrected"] =  True
+        ops["two_step_reigstration"] = True
+        ops["sparse_mode"] = True
+    else:
+        if not reprocess:
+            raise ValueError(
+                f"Experiment stored at {path} has already been process by suite2p")
+    
     run_s2p(ops=ops, db=db)
 
 
-def no_of_planes(experiment_path):
+def no_of_planes(experiment_path, infer_from_recording_class=False,
+                 inferrer = None):
     '''
     Returns the number of planes in a preprocessed suite2p folder.
 
@@ -54,28 +75,48 @@ def no_of_planes(experiment_path):
         for file in os.listdir(os.path.join(experiment_path,"suite2p")):
             if file[:-1] == "plane":
                 count +=1
-        if count!=1:
-            print(f"{experiment_path} has non-singulate plane!")
-        return count
     except NotADirectoryError:
-        return 0
+        if infer_from_recording_class and inferrer != None:
+            raise NotImplementedError
+            exp_id(experiment_path)
+            count = inferrer(exp_id)
+        else:
+            count = 0
+    
 
-def apply_to_all_one_plane_recordings(drive,func):
-    root = os.path.join(drive, 'Local_Repository')
-    for animal in os.listdir(root):
-        animal_path = os.path.join(root,animal)
-        if os.path.isdir(animal_path):
-            print(f"Processing {animal} experiments")
-            for recording in os.listdir(animal_path):
-                try:
-                    rec_path = os.path.join(animal_path,recording)
-                    if os.path.isdir(rec_path) and no_of_planes(rec_path) == 1:
-                        func(rec_path)
-                except (FileNotFoundError,ValueError) as e:
-                    print(f"{e}: {recording} not to spec; passing over it...")
+class PlaneNumberInferrer:
+    def __init__(self):
+        recording_classes, df, planes = get_classes_of_recordings()
+        what_class_is_this_recording = {}
+        plane_number_idxed_by_rec_class = []
+        for idx,attribute_values,ls_of_recordings in enumerate(recording_classes):
+            plane_values = []
+            for r in ls_of_recordings:
+                what_class_is_this_recording[r] = idx
+                if planes[r]!=0:
+                    plane_values.append(planes[r])
+                else:
+                    planes.pop(r)
+            plane_number_idxed_by_rec_class.append(mode(plane_values))
+        self.explicit_values = planes
+        self.recording_classifier = what_class_is_this_recording
+        self.plane_number = plane_number_idxed_by_rec_class
+            
+    def __call__(self,recording):
+        if recording in self.explicit_values:
+            return self.explicit_values[recording]
+        else:
+            cls = self.recording_classifier(recording)
+            plane_num = self.plane_number(cls)
+            return plane_num
+            
+
 
 if __name__ == "__main__":
-    if len(argv)<2:
-        print("Usage: python3 automate_suite2p.py <drive>")
-    drive = argv[1]
+    drive = "E:\\"
+    inferrer - PlaneNumberInferrer()
+    run_s2p_on_no_reprocessing = lambda path:run_s2p_on(path,reprocess=False,
+                                                        infer_from_recording_classes=True
+                                                        )
+    #Do this to every one-plane experiment:
     apply_to_all_one_plane_recordings(drive, run_s2p_on)
