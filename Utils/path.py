@@ -5,9 +5,10 @@ Created on Tue Mar  3 14:16:10 2020
 @author: Vivian Imbriotis
 """
 from os.path import join, split, splitext, splitdrive, sep
-from os import walk
+from os import walk, listdir
 from collections import defaultdict
 
+from accdatatools.Utils.convienience import item
 
 
 
@@ -63,7 +64,7 @@ def prune_path_to_mouse(path):
     else:
         return prune_path_to_mouse(head)
 
-def mouse_id(path):
+def get_mouse_id(path):
     '''
     Convert a path including a mouse ID to just the mouse ID.
     '''
@@ -72,7 +73,7 @@ def mouse_id(path):
     return path
     
 
-def exp_id(path):
+def get_exp_id(path):
     '''
     Convert a path including an experiment ID to just the experiment ID.
     '''
@@ -80,7 +81,7 @@ def exp_id(path):
     path = path.split(sep)[-1]
     return path
 
-def mouse_path(id_str, root):
+def get_mouse_path(id_str, root):
     '''
     Searches the directory tree rooted at root for a path corresponding to
     the Mouse ID id_str.
@@ -89,7 +90,7 @@ def mouse_path(id_str, root):
     for root,dirs,files in walk(root):
         for directory in dirs:
             try:
-                if mouse_id(directory) == id_str:
+                if get_mouse_id(directory) == id_str:
                     return join(root,directory)
             except AttributeError: pass
     raise FileNotFoundError(
@@ -97,7 +98,7 @@ def mouse_path(id_str, root):
     
     
 
-def exp_path(id_str, root):
+def get_exp_path(id_str, root):
     '''
     Searches the directory tree rooted at root for a path corresponding to
     the Experiment ID id_str. 
@@ -105,11 +106,21 @@ def exp_path(id_str, root):
     for root,dirs,files in walk(root):
         for directory in dirs:
             try:
-                if exp_id(directory) == id_str:
+                if get_exp_id(directory) == id_str:
                     return join(root,directory)
             except AttributeError: pass
     raise FileNotFoundError(
         "No directory corresponding to that Experiment ID found.")
+
+def get_timeline_path(exp_path):
+    file = item([file for file in listdir(exp_path) if "Timeline" in file])
+    return join(exp_path,file)
+
+def get_psychstim_path(exp_path):
+    file = item([file for file in listdir(exp_path) if "psychstim" in file])
+    return join(exp_path,file)
+
+
 
 
 def get_all_files_with_condition(path, condition, verbose=False):

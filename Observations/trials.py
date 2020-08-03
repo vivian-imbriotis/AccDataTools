@@ -17,7 +17,7 @@ dataset to a binary file.'
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn
+#import seaborn
 import os
 import pickle as pkl
 
@@ -27,7 +27,7 @@ from accdatatools.Utils.map_across_dataset import apply_to_all_one_plane_recordi
 from accdatatools.Utils.deeploadmat import loadmat
 from accdatatools.Utils.convienience import item
 from accdatatools.DataCleaning.determine_dprime import calc_d_prime
-from accdatatools.Timing.synchonisation import get_neural_frame_times,get_lick_state_by_frame
+from accdatatools.Timing.synchronisation import get_neural_frame_times,get_lick_state_by_frame
 from accdatatools.Observations.recordings import Recording
 
 class SparseTrial:
@@ -52,53 +52,60 @@ class SparseTrial:
         self.complete       = True #The object is complete until a field is missing
         self.stim_id        = struct.stimID
         self.istest         = self.stim_id in {GLOBALS.TESTLEFT, GLOBALS.TESTRIGHT}
-        self.isleft         = self.stim_id in GLOBALS.LEFT
-        self.isright        = self.stim_id in GLOBALS.RIGHT
-        self.isgo           = self.stim_id in GLOBALS.GO
+        
+        #Get basic stimulus attributes
+        struct_attr_names = ('stimside','go','contrast')
+        self_attr_names = ('isright','isgo','contrast')
+        for self_attr, struct_attr in zip(self_attr_names,struct_attr_names):
+            if hasattr(struct.stimAttributes,struct_attr):
+                setattr(self,self_attr,
+                        getattr(struct.stimAttributes,struct_attr))
+            elif tolerant:
+                setattr(self,self_attr,None)
+                self.complete = False
+            else:
+                raise ValueError(
+                    f"Intolerant Trial failed to find {struct_attr} in matstruct"
+                    )
+        self.isleft = not self.isright if self.isright!=None else None
         try:
             self.correct        = struct.correct
         except AttributeError as e:
             if tolerant:
                 self.correct = None
+                self.complete = False
             else:
                 raise e
         self.affirmative    = ((self.correct and self.isgo) or 
                                (not self.correct and not self.isgo))
-        try:
-            self.contrast        = struct.stimAttributes.contrast
-        except AttributeError as e:
-            if tolerant:
-                self.contrast = None
-            else:
-                raise e
-        try:
-            #Get absolute timing information
-            self.start_trial    = struct.timing.StartTrial
-            self.start_stimulus = struct.timing.StimulusStart
-            self.start_response = struct.timing.ResponseStart
-            self.end_response   = struct.timing.ResponseEnd
-            self.end_trial      = struct.timing.EndClearDelay
-            
-            #Get some relative timing as sugar
-            self.rel_start_stim = self.start_stimulus - self.start_trial
-            self.rel_start_resp = self.start_response - self.start_trial
-            self.rel_end_resp   = self.end_response   - self.start_trial
-            self.duration       = self.end_trial      - self.start_trial
-            
-        except AttributeError as e:
-            if tolerant:
+        
+        
+        #Get absolute timing information
+        struct_attr_names = ('StartTrial','StimulusStart','ResponseStart','ResponseEnd','EndClearDelay')
+        self_attr_names = ('start_trial','start_stimulus','start_response','end_response','end_trial')
+        for self_attr, struct_attr in zip(self_attr_names,struct_attr_names):
+            if hasattr(struct.timing,struct_attr):
+                setattr(self,self_attr,getattr(struct.timing,
+                                               struct_attr))
+            elif tolerant:
+                setattr(self,self_attr,None)
                 self.complete = False
-                self.start_trial    = None
-                self.start_stimulus = None
-                self.start_response = None
-                self.end_response   = None
-                self.end_trial      = None
-                self.rel_start_stim = None
-                self.rel_start_resp = None
-                self.rel_end_resp   = None
-                self.duration       = None
             else:
-                raise e
+                raise ValueError(f"Intolerant Trial failed to find {struct_attr} in matlab struct")
+            
+        #Get relative timing as sugar
+        if self.start_stimulus!=None and self.start_trial!=None:
+                self.rel_start_stim = self.start_stimulus - self.start_trial
+        else: self.rel_start_stim=None
+        if self.start_response!=None and self.start_trial!=None:
+                self.rel_start_resp = self.start_response - self.start_trial
+        else:self.rel_start_resp = None
+        if self.end_response!=None and self.start_trial!=None:
+                self.rel_end_resp   = self.end_response   - self.start_trial
+        else: self.rel_end_resp = None
+        if self.end_trial!=None and self.start_trial!=None:
+                self.duration       = self.end_trial      - self.start_trial
+        else: self.duration = None
         
     def is_occuring(self, time, include_quiescent = False):
         '''
@@ -171,17 +178,20 @@ class Trial(SparseTrial):
         self.ROI_identifiers = np.argwhere(statistic_extractor.iscell)
         
     def get_traces(self,statistic_extractor, frame_times, licks):
-
-        all_traces = statistic_extractor.dF_on_F[statistic_extractor.iscell]
-        all_spks   = statistic_extractor.spks[statistic_extractor.iscell]
-        #We need the indexes of the frames corresponding to trial
-        #start and end times
-        start_idx = frame_times.searchsorted(self.start_stimulus - 1)
-        end_idx   = start_idx + 26
-        if end_idx>all_traces.shape[1]:
-            raise ValueError("Trial not contained in recording")
-        return (all_traces[:,start_idx:end_idx], all_spks[:,start_idx:end_idx],
-                licks[start_idx:end_idx])
+        try:
+            all_traces = statistic_extractor.dF_on_F[statistic_extractor.iscell]
+            all_spks   = statistic_extractor.spks[statistic_extractor.iscell]
+            #We need the indexes of the frames corresponding to trial
+            #start and end times
+            start_idx = frame_times.searchsorted(self.start_stimulus - 1)
+            end_idx   = start_idx + 26
+            if end_idx>all_traces.shape[1]:
+                raise ValueError("Trial not contained in recording")
+            return (all_traces[:,start_idx:end_idx], all_spks[:,start_idx:end_idx],
+                    licks[start_idx:end_idx])
+        finally:
+            self.start_idx = start_idx
+            self.end_idx = end_idx
         
     def to_dict(self):
         result = super.to_dict()

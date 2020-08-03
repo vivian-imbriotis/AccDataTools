@@ -4,21 +4,22 @@ Created on Tue Jun 23 13:15:20 2020
 
 @author: Vivian Imbriotis
 """
+import os
+
+from rastermap.mapping import Rastermap
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+import numpy as np
+import seaborn
+
 
 from accdatatools.Observations.recordings import Recording
 from accdatatools.Observations.trials import get_trials_in_recording
-from accdatatools.Timing.synchonisation import get_neural_frame_times, get_lick_state_by_frame
+from accdatatools.Timing.synchronisation import get_neural_frame_times, get_lick_state_by_frame
 from accdatatools.Utils.map_across_dataset import apply_to_all_one_plane_recordings
 from accdatatools.Utils.convienience import item
 
-from rastermap.mapping import Rastermap
 
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
-
-import numpy as np
-import seaborn
-import os
 
 
 class ExperimentFigure:

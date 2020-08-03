@@ -5,16 +5,27 @@ Created on Thu Jul  2 11:46:41 2020
 @author: Vivian Imbriotis
 
 Converting the suite2p, DeepLabCut, and experiment metadata intermediaries
-to a CSV for further analysis with R, collapsing across time, ROIs, or both
-to reduce the number of dimentions in the output data.
+to a CSV for further analysis with R, collapsing across time or across both
+time and ROIS to reduce the number of dimentions in the output data.
+Collapsing across ROIs without collapsing across time is not currently implemented.
 """
 
-from unroll_dataset import Recording
+from without_collapsing import RecordingUnroller
 import numpy as np
 import pandas as pd
-from DataCleaning.path_manipulation import apply_to_all_one_plane_recordings
+from scipy.stats import pearsonr
+from accdatatools.Utils.map_across_dataset import apply_to_all_one_plane_recordings
 
-class PerTrialRecording(Recording):
+def calculate_pvalues(df):
+    df = df.dropna()._get_numeric_data()
+    dfcols = pd.DataFrame(columns=df.columns)
+    pvalues = dfcols.transpose().join(dfcols, how='outer')
+    for r in df.columns:
+        for c in df.columns:
+            pvalues[r][c] = round(pearsonr(df[r], df[c])[1], 4)
+    return pvalues
+
+class CollapsingRecordingUnroller(RecordingUnroller):
     def get_trial_auc(self,collapse_across_ROIs = True):
         roi_aucs = np.array([np.sum(trial.dF_on_F,axis=-1) for trial in self.trials])
         if collapse_across_ROIs:
@@ -44,29 +55,62 @@ class PerTrialRecording(Recording):
             return np.mean(roi_aucs,axis=-1)
         else:
             return roi_aucs
+    def get_reaction_time(self):
+        reaction_times = np.zeros(len(self.trials))
+        for idx,trial in enumerate(self.trials):
+            #Mice can only have reaction times if they're correct on a go trial.
+            if all((trial.correct, not trial.istest, trial.isgo)):
+                #When was the first lick after the stimulus appeared, 
+                #excluding the first 500ms?
+                first_lick_after_stim = np.argmax(
+                    self.lick_times>(trial.start_stimulus+0.5))
+                lick_time = self.lick_times[first_lick_after_stim]
+                if lick_time>trial.end_response: reaction_time = False
+                else: reaction_time = lick_time - trial.start_stimulus
+                if reaction_time>3.5: reaction_time = False
+            else:
+                reaction_time = False
+            reaction_times[idx] = reaction_time
+        return reaction_times
+    
+    def get_mean_pupil_size_over_stim_period(self):
+        mean_pupil_diameters = np.zeros(len(self.trials))
+        for idx,trial in enumerate(self.trials):
+            pupil_size = np.nanmean(
+                self.pupil_diameter[trial.start_idx:trial.end_idx]
+                )
+            mean_pupil_diameters[idx] = pupil_size
+        return mean_pupil_diameters
+    
     def to_unrolled_records(self,collapse_across_ROIs=True):
         output = []
-        for (trial_idx,trial), full_auc, tone_auc, stim_auc, resp_auc in zip(
+        for ((trial_idx,trial), full_auc, tone_auc, stim_auc, resp_auc, 
+             reaction_time, pupil_size) in zip(
                 enumerate(self.trials),
                 self.get_trial_auc(collapse_across_ROIs),
                 self.get_tone_auc(collapse_across_ROIs),
                 self.get_stim_auc(collapse_across_ROIs),
-                self.get_resp_auc(collapse_across_ROIs)):
+                self.get_resp_auc(collapse_across_ROIs),
+                self.get_reaction_time(),
+                self.get_mean_pupil_size_over_stim_period()):
             if collapse_across_ROIs:
-                output.append({"TrialID": trial.recording,
+                output.append({"TrialID": self.exp_path.split("\\")[-1] + f" {trial_idx}",
                         "Correct": trial.correct,
                         "Go":      trial.isgo,
-                        "Side":    "Left" if trial.isleft else "Right",
+                        "Side":    "Left" if trial.isleft else ("Right" if trial.isright else "Unknown"),
+                        "contrast": trial.contrast,
                         "TrialAUC":full_auc,
                         "ToneAUC": tone_auc,
                         "StimAUC": stim_auc,
-                        "RespAUC": resp_auc
+                        "RespAUC": resp_auc,
+                        "Reaction_Time": reaction_time if reaction_time else np.nan,
+                        "Pupil_size": pupil_size if pupil_size else np.nan
                         })
             else:
                 for roi, (f,t,s,r) in enumerate(zip(full_auc,tone_auc,
                                                     stim_auc,resp_auc)):
                     output.append({
-                            "TrialID": trial.recording + str(trial_idx),
+                            "TrialID": self.exp_path.split("\\")[-1] + f" {trial_idx}",
                             "roiNum":  roi,
                             "Correct": trial.correct,
                             "Go":      trial.isgo,
@@ -75,7 +119,9 @@ class PerTrialRecording(Recording):
                             "TrialAUC":f,
                             "ToneAUC": t,
                             "StimAUC": s,
-                            "RespAUC": r
+                            "RespAUC": r,
+                            "Reaction_Time": reaction_time if reaction_time else np.nan,
+                            "Pupil_size": pupil_size if pupil_size else np.nan
                             })
         return output
     
@@ -85,14 +131,52 @@ class PerTrialRecording(Recording):
             df.to_csv(file)
         else:
             df.to_csv(file,header=(file.tell()==0))
+            
+    def to_dataframe(self,collapse_across_ROIs = True):
+        df = pd.DataFrame(self.to_unrolled_records(collapse_across_ROIs))
+        return df
 
-
-
-if __name__=="__main__":
+def main(path):
+    '''Dump every recording into a CSV file'''
     #First, delete all existing file contents
-    open("C:/Users/Vivian Imbriotis/Desktop/byroitrialdataset.csv",'w').close()
+    open(path,'w').close()
     #Reopen in append mode and append each experiment
-    csv = open("C:/Users/Vivian Imbriotis/Desktop/byroitrialdataset.csv", 'a')
+    csv = open(path, 'a')
     func = lambda path:PerTrialRecording(path, True).to_csv(csv,False)
     apply_to_all_one_plane_recordings("E:\\", func)
     csv.close()
+
+if __name__=="__main__":
+    #main(path = "C:/Users/Vivian Imbriotis/Desktop/byroitrialdataset.csv")
+    df = PerTrialRecording("H:/Local_Repository/CFEB013/2016-06-29_02_CFEB013",True,False).to_dataframe()
+    df2 = df.loc[:,'Reaction_Time':'Pupil_size'][df.Reaction_Time!='NA'].dropna()
+    df2.Reaction_Time = pd.to_numeric(df.Reaction_Time)
+    import matplotlib.pyplot as plt
+    fig,ax = plt.subplots(nrows=2, ncols=2, constrained_layout=True)
+    ax[0][0].plot(df2.Reaction_Time,df2.Pupil_size,'o')
+    ax[0][0].set_xlabel("Reaction Time (s)")
+    ax[0][0].set_ylabel("Pupil Diameter while reacting (pixels)")
+    ax[0][1].violinplot([df.Pupil_size[df.Correct==True].values,
+                df.Pupil_size[df.Correct==False].values]
+                   )
+    ax[0][1].set_ylabel("Pupil diameter while reacting (pixels)")
+    ax[0][1].set_xticks([1,2])
+    ax[0][1].set_xticklabels(["Correct","Incorrect"])
+    reactions = df[['contrast','Reaction_Time']].dropna()
+    ax[1][0].violinplot([reactions.Reaction_Time[reactions.contrast==0.1].values,
+                   reactions.Reaction_Time[reactions.contrast==0.5].values],
+                  )
+    ax[1][0].set_xticks([1,2])
+    ax[1][0].set_xticklabels(["10%","50%"])
+    ax[1][0].set_xlabel("Contrast")
+    ax[1][0].set_ylabel("Reaction Time")
+    pupils = df[['contrast','Pupil_size']].dropna()
+    ax[1][1].violinplot([pupils.Pupil_size[pupils.contrast==0.1].values,
+                   pupils.Pupil_size[pupils.contrast==0.5].values],
+                  )
+    ax[1][1].set_xticks([1,2])
+    ax[1][1].set_xticklabels(["10%","50%"])
+    ax[1][1].set_xlabel("Contrast")
+    ax[1][1].set_ylabel("Pupil Diameter while reacting (pixels)")
+    fig.show()
+    

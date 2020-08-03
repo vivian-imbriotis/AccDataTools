@@ -16,8 +16,8 @@ import numpy as np
 import deeplabcut as dlc
 
 
-if __name__=="__main__":
-    root = "C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/"
-    config_path = root + "config.yaml"
-    vid_dir = root + "videos/"
-    vids = [vid_dir + file for file in os.listdir(vid_dir) if ".mp4" in file]
+
+root = "C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/"
+config_path = root + "config.yaml"
+vid_dir = root + "videos/"
+vids = [vid_dir + file for file in os.listdir(vid_dir) if ".mp4" in file]

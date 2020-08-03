@@ -547,7 +547,7 @@ def get_pupil_size_at_each_eyecam_frame(h5_path):
         except np.linalg.LinAlgError:
             ellipse = False
         if ellipse and fittedeye:
-            results[idx] = ellipse.area
+            results[idx] = min(ellipse.axes)
         else:
             results[idx] = np.nan
         if (idx%1000==0):

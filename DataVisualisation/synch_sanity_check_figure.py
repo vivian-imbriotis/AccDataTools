@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
-from accdatatools.Timing.synchonisation import (get_lick_state_by_frame,
+from accdatatools.Timing.synchronisation import (get_lick_state_by_frame,
                                                 get_eyecam_frame_times,
                                                 get_nearest_frame_to_each_timepoint,
                                                 get_neural_frame_times)

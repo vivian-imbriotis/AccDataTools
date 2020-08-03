@@ -22,7 +22,7 @@ import pandas as pd
 from accdatatools.Observations.trials import _get_trial_structs, SparseTrial
 from accdatatools.Utils.map_across_dataset import apply_to_all_recordings
 from accdatatools.Utils.convienience import item
-from accdatatools.Utils.path import exp_id
+from accdatatools.Utils.path import get_exp_id, get_timeline_path, get_psychstim_path
 from accdatatools.Utils.map_across_dataset import no_of_planes
 from accdatatools.Utils.deeploadmat import loadmat
 from accdatatools.DataCleaning.determine_dprime import d_prime
@@ -53,7 +53,7 @@ class ParentedSparseTrial(SparseTrial):
     and the type of that recording
     '''
     def __init__(self,struct,trial_type,exp_path,tolerant=False):
-        self.recording_id = exp_id(exp_path)
+        self.recording_id = get_exp_id(exp_path)
         self.type=trial_type
         super().__init__(struct,tolerant)
     def to_dict(self):
@@ -97,20 +97,6 @@ def get_count_and_stats(dataframe,attribute='not_provided',value='not_provided',
     d = d_prime(sensitivity, (1-specificity)) if sensitivity and specificity else None
     return StatisticRepresenter(count,accurracy,sensitivity,specificity,d,
                                 tests,left,gos)
-
-def get_counts_accuracies_dprimes_for_each_unique_attribute(df):
-    pass
-    
-
-def get_timeline_path(exp_path):
-    file = item([file for file in os.listdir(exp_path) if "Timeline" in file])
-    return os.path.join(exp_path,file)
-
-def get_psychstim_path(exp_path):
-    file = item([file for file in os.listdir(exp_path) if "psychstim" in file])
-    return os.path.join(exp_path,file)
-
-
 
 
 
@@ -201,8 +187,8 @@ def get_classes_of_recording(root="D:\\"):
     return recording_classes, df, planes
 
 
-def classwise_summary():
-    recording_classes, df, planes = get_classes_of_recording()
+def classwise_summary(root = "D:\\"):
+    recording_classes, df, planes = get_classes_of_recording(root=root)
     with open("classwise_summary.txt","w") as file:
         for idx,(attribute_values,ls_of_recordings) in enumerate(recording_classes.items()):
             file.write(f"CLASS {idx} ")
@@ -249,5 +235,5 @@ def full_summary():
     # df = df.loc[:,['recording_id', 'test', 'go', 'side', 'correct', 'affirmative', 'contrast']]
     
 if __name__=="__main__":
-    classwise_summary()
+    classwise_summary("H:\\")
     

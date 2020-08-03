@@ -12,8 +12,7 @@ from accdatatools.ProcessPupil.size import get_pupil_size_at_each_eyecam_frame
 from accdatatools.Utils.deeploadmat import loadmat
 from accdatatools.Utils.signal_processing import (rising_edges, 
                                                   rising_or_falling_edges)
-from accdatatools.Observations.recordings import Recording
-
+from accdatatools.ProcessPupil.size import get_pupil_size_at_each_eyecam_frame
 
 
 def get_neural_frame_times(timeline_path, number_of_frames):
@@ -77,6 +76,16 @@ def get_neural_frame_times(timeline_path, number_of_frames):
     frame_times = np.mean(frame_times, axis = -1)
     return frame_times
 
+
+def get_lick_times(timeline_path):
+    timeline = loadmat(timeline_path)
+    timeline = timeline['Timeline']
+    lick_voltages = timeline['rawDAQData'][:,5]
+    edges = rising_edges(lick_voltages)
+    #When did these rising edges happen?
+    lick_times = timeline['rawDAQTimestamps'][edges]
+    return lick_times
+
 def get_lick_state_by_frame(timeline_path, frame_times):
     '''
     For each frame, whether one or more licks occurred during the
@@ -96,12 +105,7 @@ def get_lick_state_by_frame(timeline_path, frame_times):
         Number of licks was initiated during the corresponding frame.
 
     '''
-    timeline = loadmat(timeline_path)
-    timeline = timeline['Timeline']
-    lick_voltages = timeline['rawDAQData'][:,5]
-    edges = rising_edges(lick_voltages)
-    #When did these rising edges happen?
-    lick_times = timeline['rawDAQTimestamps'][edges]
+    lick_times = get_lick_times(timeline_path)
     #For each frame, how many licks occured in the time between that frame
     #and the next?
     #To find this we can just find the cumulative number of licks:
@@ -113,7 +117,24 @@ def get_lick_state_by_frame(timeline_path, frame_times):
     return np.append(np.diff(cumulative_licks),0)
 
 
-def get_eyecam_frame_times(matlab_timeline_file, dlc_h5_file):
+def get_eye_diameter_at_timepoints(hdf_path,timeline_path,timepoints):
+    pupil_sizes = get_pupil_size_at_each_eyecam_frame(hdf_path)
+    eyecam_frame_times = get_eyecam_frame_times(timeline_path)
+    eyecam_frame_times = eyecam_frame_times[:len(pupil_sizes)]
+    #What was the nearest eyecam frame to each timepoints?
+    nearest_eyecam_frames = get_nearest_frame_to_each_timepoint(
+                                eyecam_frame_times,
+                                timepoints)
+    # try:
+    #     assert len(pupil_sizes) == len(eyecam_frame_times)
+    # except AssertionError as e:
+    #     print(f'len(pupil_sizes) = {len(pupil_sizes)}')
+    #     print(f'len(eyecam_frame_times) = {len(eyecam_frame_times)}')
+    #     raise e
+    return pupil_sizes[nearest_eyecam_frames]
+    
+
+def get_eyecam_frame_times(matlab_timeline_file):
     obj = loadmat(matlab_timeline_file)
     timeline = obj["Timeline"]
     columns = np.array([i.name for i in timeline["hw"]["inputs"]])
@@ -156,16 +177,6 @@ def intersperse_events(input_array, n):
         output_array[interspersed_events] = True
     return output_array
 
-# def get_pupil_at_each_timepoint(timeline_path, h5_path):
-#     timeline = loadmat(timeline_path)
-#     timeline = timeline['Timeline']
-#     eye_cam_voltages = timeline['rawDAQData'][:,3]
-#     edges = rising_or_falling_edges(eye_cam_voltages, cutoff=0.5)
-#     eye_cam_frame_times = timeline['rawDAQTimestamps'][edges]
-#     pupil_sizes = get_pupil_size_at_each_eyecam_frame(h5_path)
-#     print(eye_cam_frame_times.shape)
-#     print(pupil_sizes.shape)
-#     return np.stack(eye_cam_frame_times,pupil_sizes)
 
 def get_nearest_frame_to_each_timepoint(frame_times, ls_of_timepoints):
     '''
@@ -194,6 +205,7 @@ def get_nearest_frame_to_each_timepoint(frame_times, ls_of_timepoints):
     '''
     #find all the smallest idxs such that all frame_times[idxs]>ls_of_timepoints
     idxs = np.searchsorted(frame_times, ls_of_timepoints, side="left")
+    idxs[idxs==len(frame_times)] -= 1
     #Now there are only two options:
     #Either frame_times[idxs][n] is closest to ls_of_timepoints[n],
     #  or frame_times[idxs][n-1] is. Set up a condition list:
@@ -203,6 +215,7 @@ def get_nearest_frame_to_each_timepoint(frame_times, ls_of_timepoints):
                 True]
     choicelist = [idxs, idxs-1]
     frame_idx_list = np.select(condlist, choicelist)
+
     return frame_idx_list
 
 

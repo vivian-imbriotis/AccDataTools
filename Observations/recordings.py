@@ -15,34 +15,63 @@ import matplotlib.pyplot as plt
 from scipy.ndimage.filters import minimum_filter1d, uniform_filter1d
 from scipy.stats import siegelslopes
 
+from accdatatools.Utils.path import get_timeline_path, get_exp_id
+from accdatatools.Timing.synchronisation import get_lick_times
+
 
 
 class Recording:
     def __init__(self, path):
-        self.__path = path
-        cwd = os.getcwd()
-        os.chdir(path)
+        '''
         
-        #load in all the suite2p stuff
-        self.stat = np.load("stat.npy", allow_pickle = True)
-        self.ops  = np.load("ops.npy", allow_pickle = True).item()
-        self.F    = np.load("F.npy")
-        #Sometimes small values are negative which messes with division by F0
-        self.F    = np.abs(self.F)
-        self.Fneu = np.load("Fneu.npy")
-        #same here
-        self.Fneu = np.abs(self.Fneu)
 
-        #Calculate deltaF/F
-        self.Fcorr = np.maximum(self.F - 0.8*self.Fneu,1)
-        self.F0 = self.running_min(self.Fcorr, 30, 100)
-        self.dF_on_F = np.maximum((self.Fcorr - self.F0) / self.F0,0.01)
-        
-        #Get the deconvoluted spiking data and then binarise it
-        self.spks = (np.load('spks.npy') > 0)
-        
-        self.iscell = np.load("iscell.npy")[:,0].astype(np.bool)
-        os.chdir(cwd)
+        Parameters
+        ----------
+        path : str
+            The path to the experiment folder (which must already have been 
+            processed by suite2p).
+
+        '''
+        self.exp_path = path
+        suite2p_path = os.path.join(path,"suite2p","plane0")
+        self.__path = suite2p_path
+        cwd = os.getcwd()
+        try:
+            os.chdir(suite2p_path)
+            
+            #load in all the suite2p stuff
+            self.stat = np.load("stat.npy", allow_pickle = True)
+            self.ops  = np.load("ops.npy", allow_pickle = True).item()
+            self.F    = np.load("F.npy")
+            #Sometimes small values are negative which messes with division by F0
+            self.F    = np.abs(self.F)
+            self.Fneu = np.load("Fneu.npy")
+            #same here
+            self.Fneu = np.abs(self.Fneu)
+    
+            #Calculate deltaF/F
+            self.Fcorr = np.maximum(self.F - 0.8*self.Fneu,1)
+            self.F0 = self.running_min(self.Fcorr, 30, 100)
+            self.dF_on_F = np.maximum((self.Fcorr - self.F0) / self.F0,0.01)
+            
+            #Get the deconvoluted spiking data and then binarise it
+            self.spks = (np.load('spks.npy') > 0)
+            self.iscell = np.load("iscell.npy")[:,0].astype(np.bool)
+            
+            timeline_path = get_timeline_path(self.exp_path)
+            self.lick_times = get_lick_times(timeline_path)
+            
+            #Lastly we need to know in how many prior recordings this mouse
+            #has appeared. To do this we need to go up a level to
+            #the mouse's folder, then see which have dates that happened
+            #before this one:
+            mouse_dir,exp_id = os.path.split(self.exp_path)
+            folders = sorted(os.listdir(mouse_dir))
+            folders_preceding_this_one = folders[:folders.index(exp_id)]
+            self.trial_number = len(folders_preceding_this_one) + 1
+            
+        finally:
+            os.chdir(cwd)
     
     def gen_iscell(self):
         F_Fneu_ratio = np.fromiter((np.sum(x[0])/np.sum(x[1]) for x in zip(self.F,self.Fneu)),
