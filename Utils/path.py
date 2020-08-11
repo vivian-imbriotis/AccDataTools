@@ -121,6 +121,19 @@ def get_psychstim_path(exp_path):
     return join(exp_path,file)
 
 
+DLC_ANALYSED_VIDEOS_DIRECTORY = "C:/Users/viviani/Desktop/allvideos"
+
+def get_pupil_hdf_path(exp_path,
+                       directory = DLC_ANALYSED_VIDEOS_DIRECTORY):
+    path, exp_id = split(exp_path)
+    for file in listdir(directory):
+        if exp_id in file and '.h5' in file:
+            hdf_path = join(DLC_ANALYSED_VIDEOS_DIRECTORY,
+                                    file)
+            return hdf_path
+    raise ValueError(
+        f"No file in {DLC_ANALYSED_VIDEOS_DIRECTORY} matching {exp_id}"
+        )
 
 
 def get_all_files_with_condition(path, condition, verbose=False):
