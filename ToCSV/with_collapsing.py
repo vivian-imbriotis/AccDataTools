@@ -13,17 +13,19 @@ Collapsing across ROIs without collapsing across time is not currently implement
 from without_collapsing import RecordingUnroller
 import numpy as np
 import pandas as pd
-from scipy.stats import pearsonr
+from scipy.stats import kstest, zscore, pearsonr
+import matplotlib.pyplot as plt
+# from scipy.stats import pearsonr
 from accdatatools.Utils.map_across_dataset import apply_to_all_one_plane_recordings
 
-def calculate_pvalues(df):
-    df = df.dropna()._get_numeric_data()
-    dfcols = pd.DataFrame(columns=df.columns)
-    pvalues = dfcols.transpose().join(dfcols, how='outer')
-    for r in df.columns:
-        for c in df.columns:
-            pvalues[r][c] = round(pearsonr(df[r], df[c])[1], 4)
-    return pvalues
+# def calculate_pvalues(df):
+#     df = df.dropna()._get_numeric_data()
+#     dfcols = pd.DataFrame(columns=df.columns)
+#     pvalues = dfcols.transpose().join(dfcols, how='outer')
+#     for r in df.columns:
+#         for c in df.columns:
+#             pvalues[r][c] = round(pearsonr(df[r], df[c])[1], 4)
+#     return pvalues
 
 class CollapsingRecordingUnroller(RecordingUnroller):
     def get_trial_auc(self,collapse_across_ROIs = True):
@@ -136,19 +138,8 @@ class CollapsingRecordingUnroller(RecordingUnroller):
         df = pd.DataFrame(self.to_unrolled_records(collapse_across_ROIs))
         return df
 
-def main(path):
-    '''Dump every recording into a CSV file'''
-    #First, delete all existing file contents
-    open(path,'w').close()
-    #Reopen in append mode and append each experiment
-    csv = open(path, 'a')
-    func = lambda path:PerTrialRecording(path, True).to_csv(csv,False)
-    apply_to_all_one_plane_recordings("E:\\", func)
-    csv.close()
-
-if __name__=="__main__":
-    #main(path = "C:/Users/Vivian Imbriotis/Desktop/byroitrialdataset.csv")
-    df = PerTrialRecording("H:/Local_Repository/CFEB013/2016-06-29_02_CFEB013",True,False).to_dataframe()
+def generate_attention_metrics_figure():
+    df = CollapsingRecordingUnroller("H:/Local_Repository/CFEB013/2016-06-29_02_CFEB013",True,False).to_dataframe()
     df2 = df.loc[:,'Reaction_Time':'Pupil_size'][df.Reaction_Time!='NA'].dropna()
     df2.Reaction_Time = pd.to_numeric(df.Reaction_Time)
     import matplotlib.pyplot as plt
@@ -179,4 +170,86 @@ if __name__=="__main__":
     ax[1][1].set_xlabel("Contrast")
     ax[1][1].set_ylabel("Pupil Diameter while reacting (pixels)")
     fig.show()
+
+def perform_attention_metrics_testing():
+    df = pd.read_csv("C:/Users/viviani/Desktop/alltrials.csv")
+    df["Recording_ID"] = list(map(lambda s:s.split(" ")[-1],df.TrialID.values))
+    for ID in df.Recording_ID.unique():
+        subset = df[df.Recording_ID == ID].Pupil_size.values
+        subset_zscore = zscore(subset, nan_policy = "omit")
+        df.loc[df.Recording_ID == ID, "Pupil_size"] = subset_zscore
+    df2 = df.loc[:,'Reaction_Time':'Pupil_size'][df.Reaction_Time!='NA'].dropna()
+    df2.Reaction_Time = pd.to_numeric(df.Reaction_Time)
+    fig,ax = plt.subplots(nrows=2, ncols=2, constrained_layout=True)
+    ax[0][0].plot(df2.Reaction_Time,df2.Pupil_size,'o',
+                  markersize = 1)
+    ax[0][0].set_xlabel("Reaction Time (s)")
+    ax[0][0].set_ylabel("Pupil Diameter while reacting\n(z-score within recording)")
+    df3 = df[['Correct','Pupil_size']].dropna()
+    pupil_size_by_correctness = [df3.Pupil_size[df.Correct==True].values,
+                                 df3.Pupil_size[df.Correct==False].values]
+    ax[0][1].violinplot(pupil_size_by_correctness)
+    ax[0][1].set_ylabel("Pupil diameter while reacting\n(z-score within recording)")
+    ax[0][1].set_xticks([1,2])
+    ax[0][1].set_xticklabels(["Correct","Incorrect"])
+    reactions = df[['contrast','Reaction_Time']].dropna()
+    rt_by_contrast = [reactions.Reaction_Time[reactions.contrast==0.1].values,
+                      reactions.Reaction_Time[reactions.contrast==0.5].values]
+    ax[1][0].violinplot(rt_by_contrast)
+    ax[1][0].set_xticks([1,2])
+    ax[1][0].set_xticklabels(["10%","50%"])
+    ax[1][0].set_xlabel("Contrast")
+    ax[1][0].set_ylabel("Reaction Time")
+    pupils = df[['contrast','Pupil_size']].dropna()
+    pupil_size_by_contrast = [pupils.Pupil_size[pupils.contrast==0.1].values,
+                              pupils.Pupil_size[pupils.contrast==0.5].values]
+    ax[1][1].violinplot(pupil_size_by_contrast)
+    ax[1][1].set_xticks([1,2])
+    ax[1][1].set_xticklabels(["10%","50%"])
+    ax[1][1].set_xlabel("Contrast")
+    ax[1][1].set_ylabel("Pupil Diameter while reacting\n(z-score within recording)")
+    fig.show()
     
+    
+    print("\n\n\n\n\nPupil Size Vs Reaction Time")
+    s,p = pearsonr(df2.Reaction_Time,df2.Pupil_size)
+    print(f"PearsonrResult(statistic={s},\npvalue={p})")
+    
+    print("\nPupil Size Vs Contrast:")
+    print(kstest(pupil_size_by_contrast[0],
+                 pupil_size_by_contrast[1]))
+    print("\nPupil Size Vs Correctness")
+    print(kstest(pupil_size_by_correctness[0],
+                 pupil_size_by_correctness[1]))
+    print("\nReaction Time Vs Contrast")
+    print(kstest(rt_by_contrast[0],
+                 rt_by_contrast[1]))
+    print(f"\n0.05-Critical value after Bonferroni Correction\nfor 4 comparisons is {0.05/4:.4f}")
+
+
+def get_dataframe_of_full_dataset(drive):
+    result = []
+    def func(path):
+        recorder = CollapsingRecordingUnroller(path, True)
+        df = recorder.to_dataframe(collapse_across_ROIs = True)
+        del recorder
+        result.append(df)
+        del df
+    apply_to_all_one_plane_recordings(drive, func)
+    result = pd.concat(result,ignore_index=True)
+    return result
+
+def dump_dataset_as_csv_to(path):
+    '''Dump every recording into a CSV file'''
+    #First, delete all existing file contents
+    open(path,'w').close()
+    #Reopen in append mode and append each experiment
+    csv = open(path, 'a')
+    func = lambda path:CollapsingRecordingUnroller(path, True).to_csv(csv,False)
+    apply_to_all_one_plane_recordings("E:\\", func)
+    csv.close()
+
+if __name__=="__main__":
+    # dump_dataset_as_csv_to(
+    #     "C:/Users/Vivian Imbriotis/Desktop/byroitrialdataset.csv")
+

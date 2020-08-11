@@ -21,7 +21,7 @@ from accdatatools.Timing.synchronisation import (get_neural_frame_times,
                                                 get_eye_diameter_at_timepoints)
 
 
-DLC_ANALYSED_VIDEOS_DIRECTORY = "C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/videos"
+DLC_ANALYSED_VIDEOS_DIRECTORY = "C:/Users/viviani/Desktop/allvideos"
 
 class RecordingUnroller(Recording):
     def __init__(self,exp_path,ignore_dprime=False, tolerate_lack_of_eye_video = False):
@@ -132,6 +132,9 @@ class RecordingUnroller(Recording):
                             }
                             )
         return results
+    def to_dataframe(self):
+        records = self.to_unrolled_records()
+        return pd.DataFrame(records)
 
 def get_dataframe_from_path(path, ignore_dprime=False):
     try:
@@ -147,6 +150,18 @@ def append_recording_to_csv(filestream,path, ignore_dprime=False):
     if type(df)==pd.DataFrame:
         df.to_csv(filestream,header=(filestream.tell()==0))
     del df
+
+def get_whole_dataset(drive):
+    result = []
+    def func(path):
+        recorder = RecordingUnroller(path, True)
+        df = recorder.to_dataframe()
+        del recorder
+        result.append(df)
+        del df
+    apply_to_all_one_plane_recordings(drive, func)
+    result = pd.concat(result,ignore_index=True)
+    return result
 
 if __name__=="__main__":
     # #First, delete all existing file contents

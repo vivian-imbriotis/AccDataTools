@@ -178,20 +178,20 @@ class Trial(SparseTrial):
         self.ROI_identifiers = np.argwhere(statistic_extractor.iscell)
         
     def get_traces(self,statistic_extractor, frame_times, licks):
-        try:
-            all_traces = statistic_extractor.dF_on_F[statistic_extractor.iscell]
-            all_spks   = statistic_extractor.spks[statistic_extractor.iscell]
-            #We need the indexes of the frames corresponding to trial
-            #start and end times
-            start_idx = frame_times.searchsorted(self.start_stimulus - 1)
-            end_idx   = start_idx + 26
-            if end_idx>all_traces.shape[1]:
-                raise ValueError("Trial not contained in recording")
-            return (all_traces[:,start_idx:end_idx], all_spks[:,start_idx:end_idx],
-                    licks[start_idx:end_idx])
-        finally:
-            self.start_idx = start_idx
-            self.end_idx = end_idx
+        all_traces = statistic_extractor.dF_on_F[statistic_extractor.iscell]
+        all_spks   = statistic_extractor.spks[statistic_extractor.iscell]
+        #We need the indexes of the frames corresponding to trial
+        #start and end times
+        start_idx = frame_times.searchsorted(self.start_stimulus - 1)
+        end_idx   = start_idx + 26
+        if end_idx>all_traces.shape[1]:
+            raise ValueError("Trial not contained in recording")
+        
+        self.start_idx = start_idx
+        self.end_idx = end_idx
+        return (all_traces[:,start_idx:end_idx], all_spks[:,start_idx:end_idx],
+                licks[start_idx:end_idx])
+
         
     def to_dict(self):
         result = super.to_dict()
@@ -286,7 +286,7 @@ def get_trials_in_recording(exp_path, return_se=False, ignore_dprime=False,
     trials = []
     if calc_d_prime(psychstim_path)>1 or ignore_dprime:
         if se==None:
-            se      = Recording(s2p_path)
+            se      = Recording(exp_path)
         #We need the total number of frames:
         nframes = se.ops["nframes"]
         times   = get_neural_frame_times(timeline_path,nframes)

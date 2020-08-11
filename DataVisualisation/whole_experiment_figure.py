@@ -23,7 +23,7 @@ from accdatatools.Utils.convienience import item
 
 
 class ExperimentFigure:
-    def __init__(self,exp_path):
+    def __init__(self,exp_path, merge = True):
         '''
         A nice heatmap figure for all
         neurons' responses over the course of a trial.
@@ -40,10 +40,15 @@ class ExperimentFigure:
         self.trials, self.recording = get_trials_in_recording(exp_path, return_se=True)
         print("Running rastermap on fluorescence data")
         r = Rastermap()
-        r.fit(self.recording.dF_on_F)
+
         #Sort by rastermap embedding
         print("Sorting traces by rastermap ordering")
-        self.dF_on_F = self.recording.dF_on_F[r.isort]
+        if merge:
+            r.fit(self.recording.dF_on_F_merged)
+            self.dF_on_F = self.recording.dF_on_F_merged[r.isort]
+        else:
+            r.fit(self.recording.dF_on_F)
+            self.dF_on_F = self.recording.dF_on_F[r.isort]
         
         #Show overall plot
         timeline_path  = os.path.join(exp_path,
@@ -83,6 +88,7 @@ class ExperimentFigure:
                 ax.add_patch(rect)
         lick_frame = np.nonzero(self.licks)
         ax.vlines(lick_frame, -15,-10)
+        ax.set_xlim(0,350)
         fig.show()
         return fig
 
@@ -124,6 +130,6 @@ class NeuropilExperimentFigure(ExperimentFigure):
 
 
 if __name__=="__main__":
-    fig = NeuropilExperimentFigure(
+    fig = ExperimentFigure(
         "H:/Local_Repository/CFEB027/2016-10-07_03_CFEB027")
     fig.show()

@@ -17,7 +17,7 @@ from scipy.stats import siegelslopes
 
 from accdatatools.Utils.path import get_timeline_path, get_exp_id
 from accdatatools.Timing.synchronisation import get_lick_times
-
+from accdatatools.ProcessFluorescence.data_cleaning import merge_rois
 
 
 class Recording:
@@ -53,6 +53,8 @@ class Recording:
             self.Fcorr = np.maximum(self.F - 0.8*self.Fneu,1)
             self.F0 = self.running_min(self.Fcorr, 30, 100)
             self.dF_on_F = np.maximum((self.Fcorr - self.F0) / self.F0,0.01)
+            
+            self.dF_on_F_merged = merge_rois(self.dF_on_F)
             
             #Get the deconvoluted spiking data and then binarise it
             self.spks = (np.load('spks.npy') > 0)
