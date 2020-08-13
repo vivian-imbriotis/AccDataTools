@@ -7,6 +7,8 @@ Created on Tue Aug 11 21:40:19 2020
 
 #yikes, both of these files should probably get this function
 #from an abstract file
+import pickle as pkl
+
 import pandas as pd
 import numpy as np
 
@@ -33,6 +35,8 @@ class RecordingClassSummary:
         self.pooled_stats = get_count_and_stats(subset,subsetting=False)
         self.name = name
         self.signature = signature
+        self.recording_paths = list(map(lambda p:get_exp_path(p,drive),
+                                        self.recordings))
     def __repr__(self):
         intro = f"{self.name} recordings with pooled stats {self.pooled_stats}"
         varying = "This class varied across parameters like so:"
@@ -98,3 +102,12 @@ for i in (both_sides_high_contrast_summary,
           low_contrast_summary):
     print(i)
     print("\n\n\n")
+
+with open("both_sides_high_contrast.pkl",'wb') as file:
+    pkl.dump(both_sides_high_contrast_summary.recording_paths, file)
+with open("left_only_high_contrast.pkl",'wb') as file:
+    pkl.dump(left_only_high_contrast_summary.recording_paths, file)
+with open("low_contrast.pkl",'wb') as file:
+    pkl.dump(low_contrast_summary.recording_paths, file)
+
+    
