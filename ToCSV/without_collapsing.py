@@ -21,7 +21,7 @@ from accdatatools.Timing.synchronisation import (get_neural_frame_times,
                                                 get_eye_diameter_at_timepoints)
 
 
-DLC_ANALYSED_VIDEOS_DIRECTORY = "C:/Users/viviani/Desktop/allvideos"
+
 
 class RecordingUnroller(Recording):
     def __init__(self,exp_path,ignore_dprime=False, tolerate_lack_of_eye_video = False):

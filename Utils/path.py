@@ -103,6 +103,8 @@ def get_exp_path(id_str, root):
     Searches the directory tree rooted at root for a path corresponding to
     the Experiment ID id_str. 
     '''
+    if "Local_Repository" not in root:
+        root = join(root,"Local_Repository")
     for root,dirs,files in walk(root):
         for directory in dirs:
             try:
@@ -233,22 +235,22 @@ def get_all_files_with_ext(path,ext):
     return get_all_files_with_condition(path,condition)
 
 if __name__=="__main__":
-    res = get_all_files_with_name('D:\\Local_Repository', ext='data.bin')
-    mice = set()
-    exps = set()
-    files = set()
-    for mouse, exp, file in res:
-            mice.add(mouse)
-            exps.add(exp)
-            files.add(file)
-    mice = list(mice); mice.sort()
-    exps = list(exps); exps.sort()
-    files = list(files); files.sort()
-    for mouse in mice:
-        print(mouse)
-    print('\n\n----------\n\n')
-    for exp in exps:
-        print(exp)
-        
+    # res = get_all_files_with_ext('D:\\Local_Repository', ext='data.bin')
+    # mice = set()
+    # exps = set()
+    # files = set()
+    # for mouse, exp, file in res:
+    #         mice.add(mouse)
+    #         exps.add(exp)
+    #         files.add(file)
+    # mice = list(mice); mice.sort()
+    # exps = list(exps); exps.sort()
+    # files = list(files); files.sort()
+    # for mouse in mice:
+    #     print(mouse)
+    # print('\n\n----------\n\n')
+    # for exp in exps:
+    #     print(exp)
+    pass
 
 
