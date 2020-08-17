@@ -105,7 +105,7 @@ def apply_to_all_recordings(drive,func,verbose=False):
                     if verbose: print(f"LOG: {func.__name__} on {recording} resulted in {e}")
 
 
-def apply_to_all_recordings_of_class(cls, drive, func):
+def apply_to_all_recordings_of_class(cls, drive, func, verbose=True):
     '''
     Map a function across each experiment in Drive with features determined
     by cls.
@@ -127,9 +127,10 @@ def apply_to_all_recordings_of_class(cls, drive, func):
     None.
 
     '''
-    file_path = f"/../DataCleaning/{cls}"
+    file_path = f"../DataCleaning/{cls}.pkl"
+    print(file_path)
     try:
-        with open(file_path,'r') as file:
+        with open(file_path,'rb') as file:
             paths = pkl.load(file)
     except FileNotFoundError:
         raise FileNotFoundError(
@@ -140,4 +141,8 @@ def apply_to_all_recordings_of_class(cls, drive, func):
             Alternatively, you might have attempted to reference a recording
             class that doesn't exist, or might have mistyped the class name.""")
     for path in paths:
-        func(path)
+        try:
+            func(path)
+        except (FileNotFoundError,ValueError) as e:
+            if verbose: print(f"LOG: {func.__name__} on {path} resulted in {e}")
+

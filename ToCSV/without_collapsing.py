@@ -11,11 +11,12 @@ import pandas as pd
 
 
 from accdatatools.ProcessLicking.kernel import lick_transform
-from accdatatools.Utils.map_across_dataset import apply_to_all_one_plane_recordings
+from accdatatools.Utils.map_across_dataset import (apply_to_all_one_plane_recordings,
+                                                   apply_to_all_recordings_of_class)
 from accdatatools.Observations.trials import get_trials_in_recording
 from accdatatools.Observations.recordings import Recording
 from accdatatools.Utils.convienience import item
-from accdatatools.Utils.path import get_exp_id
+from accdatatools.Utils.path import get_exp_id, DLC_ANALYSED_VIDEOS_DIRECTORY
 from accdatatools.Timing.synchronisation import (get_neural_frame_times, 
                                                 get_lick_state_by_frame,
                                                 get_eye_diameter_at_timepoints)
@@ -151,7 +152,7 @@ def append_recording_to_csv(filestream,path, ignore_dprime=False):
         df.to_csv(filestream,header=(filestream.tell()==0))
     del df
 
-def get_whole_dataset(drive):
+def get_whole_dataset(drive, cls=None):
     result = []
     def func(path):
         recorder = RecordingUnroller(path, True)
@@ -159,7 +160,10 @@ def get_whole_dataset(drive):
         del recorder
         result.append(df)
         del df
-    apply_to_all_one_plane_recordings(drive, func)
+    if not cls:
+        apply_to_all_one_plane_recordings(drive, func)
+    else:
+        apply_to_all_recordings_of_class(cls,drive,func)
     result = pd.concat(result,ignore_index=True)
     return result
 

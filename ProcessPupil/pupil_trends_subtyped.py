@@ -112,8 +112,8 @@ def create_figure(df,title=None, render = True, normalize = False):
     if render: fig.show()
     return (hits,misses,fas,crs)
 
-def perform_testing(df, normalize = False):
-    hits,misses,fas,crs = create_figure(df,render=False, normalize = normalize)
+def perform_testing(df, render = False, normalize = False):
+    hits,misses,fas,crs = create_figure(df,render=render, normalize = normalize)
     hits_df   = pd.DataFrame(data = hits[1])
     hits_df["recording"] = hits[0]
     # hits["trial_no"] = hits.index
@@ -139,14 +139,77 @@ def perform_testing(df, normalize = False):
     return df
     
 
-
+def create_heatmap_figure(df):
+    print(f"Initial shape of dataframe in create_figure call is {df.shape}")
+    seaborn.set_style("dark")
+    
+    #Clean up dataframe
+    df = df[~pd.isnull(df.Trial_ID)]
+    df["roi_num"] = np.fromiter(map(lambda s:s.split(" ")[-1],df.ROI_ID),int)
+    df = df[df.roi_num==0]
+    df[df=="NA"] = np.nan
+    
+    
+    hits = df[(df.correct==1)&(df.go==1)].pivot(index = "Trial_ID", 
+                                               columns = "trial_factor", 
+                                               values = "pupil_diameter"
+                                               ).dropna(how='all').to_numpy()
+    misses = df[(df.correct==0)&(df.go==1)].pivot(index = "Trial_ID", 
+                                               columns = "trial_factor", 
+                                               values = "pupil_diameter"
+                                               ).dropna(how='all').to_numpy()
+    fas = df[(df.correct==0)&(df.go==0)].pivot(index = "Trial_ID", 
+                                               columns = "trial_factor", 
+                                               values = "pupil_diameter"
+                                               ).dropna(how='all').to_numpy()
+    crs = df[(df.correct==1)&(df.go==0)].pivot(index = "Trial_ID", 
+                                               columns = "trial_factor", 
+                                               values = "pupil_diameter"
+                                               ).dropna(how='all').to_numpy()
+    fig,ax = plt.subplots(ncols = 4, nrows = 1, constrained_layout = True,
+                          figsize = (12,8))
+    
+    (hit_axis, miss_axis, fa_axis, cr_axis) = ax
+    
+    min_len = min(len(a) for a in (hits,misses,fas,crs))
+    #HIT AXIS
+    x0 = hit_axis.imshow(hits[:min_len])
+    hit_axis.set_title("Hit")
+    hit_axis.set_ylabel("Trial")
+    
+    #MISS AXIS
+    x1 = miss_axis.imshow(misses[:min_len])
+    miss_axis.set_title("Miss")
+    
+    #FALSE ALARM AXIS
+    x2 = fa_axis.imshow(fas[:min_len])
+    fa_axis.set_title("False-Alarm")
+    
+    #CORRECT REJECTION AXIS
+    x3 = cr_axis.imshow(crs[:min_len])
+    cr_axis.set_title("Correct-Rejection")
+    
+    #Turn off inner axis ticks and labels
+    for axis in ax:
+        axis.set_xticks([])
+        if not axis is hit_axis:
+            axis.set_yticks([])
+    fig.text(0.5,0.04,"Time",ha="center")
+    
+    images = [x0,x1,x2,x3]
+    # Find the min and max of all colors for use in setting the color scale.
+    vmin = min(image.get_array().min() for image in [x0,x1,x2,x3])
+    vmax = max(image.get_array().max() for image in [x0,x1,x2,x3])
+    norm = c.Normalize(vmin=vmin, vmax=vmax)
+    for im in images:
+        im.set_norm(norm)
+    fig.colorbar(images[0], ax=ax, orientation='vertical', fraction=.02)
+    
+    
+    fig.show()
 
 if __name__=="__main__":
-    # records = RecordingUnroller("H:/Local_Repository/CFEB026/2016-09-29_06_CFEB026",
-    #                     ignore_dprime = True,
-    #                     tolerate_lack_of_eye_video = False).to_unrolled_records()
+    df = pd.read_csv("C:/users/viviani/desktop/unrolled_dataset.csv")
+    create_heatmap_figure(df)
+    
 
-    # df = pd.DataFrame(records)
-    # create_figure(df)
-    #df = pd.read_csv("C:/Users/viviani/Desktop/unrolled_dataset.csv")
-    df2 = perform_testing(df, normalize = False)
