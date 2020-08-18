@@ -54,7 +54,38 @@ def plot_trial_subset(axis,correct,go,df,cmap, normalize = False, render = True)
     return (recordings, pupils_per_timepoint)
 
 
+def plot_trial_subset_with_range(axis,correct,go,df, normalize = False, 
+                                 range_type = "error", color= "k"):
+    if range_type not in ("error","deviation"):
+        raise ValueError("range_type must be one of 'error' or 'deviation'")
+    x = np.arange(0,25)
+    df = df[df.go==go]
+    df = df[df.correct==correct]
+    df["roi_num"] = np.fromiter(map(lambda s:s.split(" ")[-1],df.ROI_ID),int)
+    pupils_per_timepoint = df[df.roi_num==0].pivot(index = "Trial_ID", 
+                                                   columns = "trial_factor", 
+                                                   values = "pupil_diameter"
+                                                   ).to_numpy()
+    pupils_per_timepoint[pupils_per_timepoint=="NA"] = np.nan
+    pupils_per_timepoint = pupils_per_timepoint.astype(float)
+    if normalize:
+        #means of first s of time
+        means = np.nanmean(pupils_per_timepoint[:,:5], axis = -1)
+        pupils_per_timepoint = pupils_per_timepoint / means[:,None]
 
+    mean = np.nanmean(pupils_per_timepoint[:,:25],axis=0)
+    rang = np.nanstd(pupils_per_timepoint[:,:25],axis=0)
+    if range_type=="error":
+        #Convert to standard error!
+        n_points = np.sum(np.isnan(pupils_per_timepoint[:,:25]), axis = 0)
+        rang /= (n_points**0.5)
+    axis.plot(x/5,mean,color='black',
+              label = 'Mean across trials')
+    axis.fill_between(x/5,mean+rang,mean-rang,
+                  color = color,
+                  alpha = 0.3,
+                  label = f"Standard {range_type}")
+    axis.set_ylim((10,20))
 
 
 def create_figure(df,title=None, render = True, normalize = False):
@@ -110,6 +141,52 @@ def create_figure(df,title=None, render = True, normalize = False):
     if title:
         fig.suptitle(title)
     if render: fig.show()
+    return (hits,misses,fas,crs)
+
+
+def create_range_figure(df,title=None, normalize = False, 
+                        range_type = "error"):
+    seaborn.set_style("dark")
+    df = df[~pd.isnull(df.Trial_ID)]
+    fig,ax = plt.subplots(ncols = 2, nrows = 2, constrained_layout = True,
+                          figsize = (12,8))
+    (hit_axis, miss_axis), (fa_axis, cr_axis) = ax
+    
+    #HIT AXIS
+    hits = plot_trial_subset_with_range(hit_axis, correct=True, go=True, df=df,
+                             normalize = normalize, range_type = range_type, color="green")
+    hit_axis.set_title("Hit Trials")
+    hit_axis.legend()
+    
+    #MISS AXIS
+    misses = plot_trial_subset_with_range(miss_axis, correct=False, go=True, df=df,
+                               normalize = normalize,  range_type = range_type, color="palegreen")
+    miss_axis.set_title("Miss Trials")
+    
+    #FALSE ALARM AXIS
+    fas = plot_trial_subset_with_range(fa_axis, correct=False, go=False ,df=df,
+                            normalize = normalize,  range_type = range_type, color="darksalmon")
+    fa_axis.set_title("False-Alarm Trials")
+    
+    #CORRECT REJECTION AXIS
+    crs = plot_trial_subset_with_range(cr_axis, correct=True, go=False, df=df,
+                            normalize = normalize, range_type = range_type, color="red")
+    cr_axis.set_title("Correct-Rejection Trials")
+    
+    
+    #Turn off inner axis ticks and labels
+    hit_axis.set_xticks([])
+    hit_axis.set_xlabel("")
+    miss_axis.set_xticks([])    
+    miss_axis.set_xlabel("")
+    miss_axis.set_yticks([])
+    miss_axis.set_ylabel("")
+    cr_axis.set_yticks([])
+    cr_axis.set_ylabel("")
+    
+    if title:
+        fig.suptitle(title)
+    fig.show()
     return (hits,misses,fas,crs)
 
 def perform_testing(df, render = False, normalize = False):
@@ -209,7 +286,7 @@ def create_heatmap_figure(df):
     fig.show()
 
 if __name__=="__main__":
-    df = pd.read_csv("C:/users/viviani/desktop/unrolled_dataset.csv")
-    create_heatmap_figure(df)
+    # df = pd.read_csv("C:/users/viviani/desktop/unrolled_dataset.csv")
+    create_range_figure(df,normalize=False,range_type="deviation")
     
 

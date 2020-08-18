@@ -85,8 +85,8 @@ class AnimalMeanVideoFigure:
                 self.ax[i][j].set_yticklabels([])
                 im_idx+=1
         self.canvas = self.fig.canvas
-    def show(self):
-        self.fig.show()
+        self.show = self.fig.show
+        self.draw = self.fig.draw
 
 
 if __name__=="__main__":

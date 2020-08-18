@@ -140,13 +140,13 @@ def subtype_experiments_by_mouse(ls_of_exp_paths):
     return sorted(exps_by_mouse)
     
 
-def create_plot(exp_paths):
-        print("I'm RUNNING!!!!")
-        fig = AnimalMeanVideoFigure(ls_of_exp_paths = exp_paths)
-        fig.show()
-        time.sleep(5)
+
+
+def get_stdin(output):
+    output += input("List-> ")
 
 def manually_group_recordings_by_cortical_area(ls_of_exp_paths):
+    plt.ion()
     subgroups = []
     remaining_exp_paths = copy(ls_of_exp_paths)
     print("""
@@ -157,11 +157,18 @@ def manually_group_recordings_by_cortical_area(ls_of_exp_paths):
           press enter without entering a list.""")
     while remaining_exp_paths:
         try:
-            plotter = multiprocessing.Process(target = create_plot, 
-                                              args = (remaining_exp_paths))
-            plotter.start()
+            fig = AnimalMeanVideoFigure(ls_of_exp_paths = remaining_exp_paths)
+            fig.canvas.manager.window.setGeometry(0,50,900,1000)
             ls = []
-            line = input("ls of recordings\n  ->")
+            line = ""
+            fig.show()
+            for i in range(100):
+                time.sleep(0.05)
+                fig.canvas.draw_idle()
+                plt.pause(.1)
+            line = input("-> ")
+            plt.close("all")
+            fig.show()
             ls.extend([int(i) for i in line.split(" ") if i!=""])
             if ls:
                 subgroups.append([remaining_exp_paths[i] for i in ls])
@@ -177,12 +184,13 @@ def manually_group_recordings_by_cortical_area(ls_of_exp_paths):
            
 
 res = []
-# for single_mouses_exps in subtype_experiments_by_mouse(
-#         low_contrast_summary.recording_paths):
-#     res.append(
-#         manually_group_recordings_by_cortical_area(
-#             single_mouses_exps)
-#         )
+
+for single_mouses_exps in subtype_experiments_by_mouse(
+        low_contrast_summary.recording_paths):
+    res.append(
+        manually_group_recordings_by_cortical_area(
+            single_mouses_exps)
+        )
     
 
 
