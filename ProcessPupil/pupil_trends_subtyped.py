@@ -62,16 +62,20 @@ def plot_trial_subset_with_range(axis,correct,go,df, normalize = False,
     df = df[df.go==go]
     df = df[df.correct==correct]
     df["roi_num"] = np.fromiter(map(lambda s:s.split(" ")[-1],df.ROI_ID),int)
+    trial_ids = df[(df.trial_factor==1)&(df.roi_num==0)].Trial_ID.values
+    recordings= pd.Series(map(lambda s:s.split(" ")[0],trial_ids)).unique()
+    if normalize:
+        for recording in recordings:
+            idxs  = list(map(lambda s:recording in s,df.Trial_ID))
+            mean = df[idxs].mean()
+            df.loc[idxs,"pupil_diameter"] /= mean
+        
     pupils_per_timepoint = df[df.roi_num==0].pivot(index = "Trial_ID", 
                                                    columns = "trial_factor", 
                                                    values = "pupil_diameter"
                                                    ).to_numpy()
     pupils_per_timepoint[pupils_per_timepoint=="NA"] = np.nan
     pupils_per_timepoint = pupils_per_timepoint.astype(float)
-    if normalize:
-        #means of first s of time
-        means = np.nanmean(pupils_per_timepoint[:,:5], axis = -1)
-        pupils_per_timepoint = pupils_per_timepoint / means[:,None]
 
     mean = np.nanmean(pupils_per_timepoint[:,:25],axis=0)
     rang = np.nanstd(pupils_per_timepoint[:,:25],axis=0)
@@ -286,7 +290,7 @@ def create_heatmap_figure(df):
     fig.show()
 
 if __name__=="__main__":
-    # df = pd.read_csv("C:/users/viviani/desktop/unrolled_dataset.csv")
-    create_range_figure(df,normalize=False,range_type="deviation")
+    df = pd.read_csv("C:/users/viviani/desktop/unrolled_dataset.csv")
+    create_range_figure(df,normalize=True,range_type="deviation")
     
 
