@@ -41,16 +41,13 @@ class AnimalMeanVideoFigure:
             experiment_paths = ls_of_exp_paths
         mean_images = {}
         for experiment_path in experiment_paths:
-                if no_of_planes(experiment_path)==1:
-                    ops_path = os.path.join(experiment_path,
-                                       "suite2p",
-                                       "plane0",
-                                       "ops.npy")
-                    ops = np.load(ops_path,allow_pickle=True).item()
-                    mean_image = ops["meanImgE"]
-                    mean_images[experiment_path] = mean_image
-
-        
+                ops_path = os.path.join(experiment_path,
+                                   "suite2p",
+                                   "plane0",
+                                   "ops.npy")
+                ops = np.load(ops_path,allow_pickle=True).item()
+                mean_image = ops["meanImgE"]
+                mean_images[experiment_path] = mean_image
         n_exps = len(mean_images)
         
         for width in range(ceil(sqrt(n_exps)),1,-1):
@@ -77,10 +74,12 @@ class AnimalMeanVideoFigure:
                 
                 self.ax[i][j]= plt.subplot(gs[i,j])
                 self.ax[i][j].imshow(im)
-                self.ax[i][j].text(0.1, 0.1,str(im_idx),
+                self.ax[i][j].text(0.5, 0.5,str(im_idx),
                                      horizontalalignment='center',
                                      verticalalignment='center',
-                                     transform = self.ax[i][j].transAxes)
+                                     transform = self.ax[i][j].transAxes,
+                                     size = 16,
+                                     color = 'k')
                 self.ax[i][j].set_xticklabels([])
                 self.ax[i][j].set_yticklabels([])
                 im_idx+=1
@@ -92,9 +91,9 @@ class AnimalMeanVideoFigure:
 if __name__=="__main__":
     plt.ioff()
     testing_ls = [
-                'H://Local_Repository\\CFEB037\\2017-01-27_01_CFEB037',
-                'H://Local_Repository\\CFEB037\\2017-01-28_01_CFEB037',
-                'H://Local_Repository\\CFEB037\\2017-01-30_01_CFEB037',
-                'H://Local_Repository\\CFEB037\\2017-02-08_02_CFEB037',]
+                'D://Local_Repository\\CFEB037\\2017-01-27_01_CFEB037',
+                'D://Local_Repository\\CFEB037\\2017-01-28_01_CFEB037',
+                'D://Local_Repository\\CFEB037\\2017-01-30_01_CFEB037',
+                'D://Local_Repository\\CFEB037\\2017-02-08_02_CFEB037']
     fig = AnimalMeanVideoFigure(ls_of_exp_paths = testing_ls)
     fig.show()

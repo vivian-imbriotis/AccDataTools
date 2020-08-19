@@ -112,7 +112,7 @@ def get_exp_path(id_str, root):
                     return join(root,directory)
             except AttributeError: pass
     raise FileNotFoundError(
-        "No directory corresponding to that Experiment ID found.")
+        f"No directory corresponding to Experiment ID {id_str} found at {root}.")
 
 def get_timeline_path(exp_path):
     file = item([file for file in listdir(exp_path) if "Timeline" in file])

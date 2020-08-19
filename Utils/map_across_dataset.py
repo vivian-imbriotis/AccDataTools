@@ -115,10 +115,11 @@ def apply_to_all_recordings_of_class(cls, drive, func, verbose=True):
     cls : string
         The class of recording to which to apply func. One of
         {"both_sides_high_contrast", "left_only_high_contrast",
-         "low_contrast"}.
+         "low_contrast", "both_sides_high_contrast_uncleaned", 
+         "left_only_high_contrast_uncleaned", "low_contrast_uncleaned"}.
     drive : str
         The drive containing the dataset, eg "E://". The dataset root directory
-        must be at top level of the drive
+        ("Local_Repository") must be at top level of the drive
     func : callable
         The function to map. Is passed a single experiment path as an argument.
 
