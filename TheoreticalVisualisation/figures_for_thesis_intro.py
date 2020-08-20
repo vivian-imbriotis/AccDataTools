@@ -1,8 +1,12 @@
 import numpy as np
+import seaborn
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.lines as lines
 import matplotlib.image as mpimg
+
+seaborn.set_style("dark")
+
 plt.rcParams["font.family"] = 'Times New Roman'
 plt.rcParams["font.size"] = 11
 
@@ -78,22 +82,17 @@ class HubelWeiselFigure:
     def __init__(self):
         field = RetinalReceptiveField()
         grat = Grating()
-        self.fig = plt.figure(figsize = [8,4])
-        field_ax = self.fig.add_axes((0.01,0.3,0.3,0.6))
+        self.fig, (field_ax, stim_ax, conv_ax) = plt.subplots(ncols=3,figsize = (8,4))
         field_ax.set_title("(a) Bipolar cell receptive field")
         field.apply_to_axis(field_ax)
-        stim_ax  = self.fig.add_axes((0.02+0.3,0.3,0.3,0.6))
         stim_ax.set_title("(b) Visual stimulus")
         grat.apply_to_axis(stim_ax)
-        conv_ax  = self.fig.add_axes((0.03+0.6,0.3,0.3,0.6))
         conv_ax.set_title("(c) Convolved stimulus")
         conv_ax.imshow(field.field*grat.field,
                        cmap = 'gray',
                        interpolation = 'bicubic')
         conv_ax.set_yticks([])
         conv_ax.set_xticks([])
-        self.fig.text(0.01, 0.1, self.caption,
-                      horizontalalignment = 'left')
     def show(self):
         self.fig.show()
         
@@ -110,9 +109,7 @@ class TopDownIllusionFigure:
         )
 
     def __init__(self):
-        self.fig = plt.figure()
-        self.ax1 = self.fig.add_axes((0.1,0.3,0.38,0.65))
-        self.ax2 = self.fig.add_axes((0.52,0.3,0.38,0.65))
+        self.fig, (self.ax1,self.ax2) = plt.subplots(ncols=2, figsize = (8,6))
         for axis in (self.ax1, self.ax2):
             axis.set_xticks([])
             axis.set_yticks([])
@@ -135,9 +132,10 @@ class TopDownIllusionFigure:
                                     linestyle = ":")
         self.ax2.add_line(dotted_line1)
         self.ax2.add_line(dotted_line2)
-            
-        self.fig.text(0.1, 0.01, self.caption,
-                      horizontalalignment = 'left')
+        self.ax1.set_title("(a)")
+        self.ax2.set_title("(b)")
+        # self.fig.text(0.1, 0.01, self.caption,
+        #               horizontalalignment = 'left')
     def show(self):
         self.fig.show()
     def generate_railroad_lines(self,slope): #() -> [lines.Line2D]
@@ -228,17 +226,12 @@ class PredictiveCodingPlot(BayesPlot):
         prior      = GaussianDistribution(prior_mu, prior_sig)
         likelihood = GaussianDistribution(likeli_mu, likeli_sig)
         posterior  = PosteriorGaussianDistribution(prior,likelihood)
-        self.fig = plt.figure()
-        self.axes = [
-            self.fig.add_axes((0.1,0.3+3*0.7/4,0.83,0.16)),
-            self.fig.add_axes((0.1,0.3+2*0.7/4,0.83,0.16)),
-            self.fig.add_axes((0.1,0.3 + 0.7/4,0.83,0.16)),
-            self.fig.add_axes((0.1,0.3,0.83,0.16))
-            ]
-        self.fig.text(0.55, 0.27, 'Environmental State', ha='center', va='center')
-        self.fig.text(0.03, 0.6, 'Probability Density', ha='center', va='center',
+        self.fig, self.axes = plt.subplots(nrows = 4, figsize = (8,6))
+        self.axes = self.axes.flatten()
+        self.fig.text(0.5, 0.05, 'Environmental State', ha='center', va='center')
+        self.fig.text(0.03, 0.5, 'Probability Density', ha='center', va='center',
                  rotation='vertical')
-        self.fig.text(0.03, 0.01, self.caption, ha = 'left')
+        # self.fig.text(0.03, 0.01, self.caption, ha = 'left')
         for idx,axis in enumerate(self.axes):
 
             self.format_axis(axis, legend = False)
@@ -258,7 +251,7 @@ class PredictiveCodingPlot(BayesPlot):
                 axis.axvline(posterior.mu,
                              linestyle = ':',
                              color = post_line.get_color())
-                arrow = axis.arrow(prior.mu, 1.3,
+                arrow = axis.arrow(prior.mu, 1,
                                 (posterior.mu - prior.mu),
                                 0,
                                 color = 'red',
@@ -297,11 +290,7 @@ class ContrastResponsePlot:
         lambda limit,midpoint,X:limit/(1+np.exp(midpoint-X))
         )
     def __init__(self):
-        self.fig = plt.figure()
-        ax1 = self.fig.add_axes((0.0625, 0.5, 0.25, 0.4))
-        ax2 = self.fig.add_axes((0.375,  0.5, 0.25, 0.4))
-        ax3 = self.fig.add_axes((0.6875, 0.5, 0.25, 0.4))
-        self.axes = [ax1, ax2, ax3]
+        self.fig,self.axes= plt.subplots(ncols=3, figsize = [8,2.5])
         for axis in self.axes:
             axis.set_yticks([])
             axis.set_xticks([])
@@ -322,7 +311,7 @@ class ContrastResponsePlot:
         self.axes[2].plot(self.log_fn(1.15,-1,self.xs),
                           linestyle = ":",
                           color = "blue")
-        self.fig.text(0.0625,0.1,self.caption)
+        # self.fig.text(0.0625,0.1,self.caption)
     def show(self):
         self.fig.show()
     def __call__(self):
@@ -332,14 +321,14 @@ class ContrastResponsePlot:
 
 
 class PsychosisPlot(BayesPlot):
-    caption = ("Figure 6: The predictive coding account of psychosis. Compare "
-               "the healthy response to an unexpected \n"
-               "stimulus (a) to the psychotic response characterised "
-               "by a less certain prior and overestimation of the\n"
-               "signal's precision (b). This leads to a larger shift in, "
-               "and higher estimated precision of, the posterior. \n"
-               "This results in a radically altered experience from noise in "
-               "the environment.")
+    # caption = ("Figure 6: The predictive coding account of psychosis. Compare "
+    #            "the healthy response to an unexpected \n"
+    #            "stimulus (a) to the psychotic response characterised "
+    #            "by a less certain prior and overestimation of the\n"
+    #            "signal's precision (b). This leads to a larger shift in, "
+    #            "and higher estimated precision of, the posterior. \n"
+    #            "This results in a radically altered experience from noise in "
+    #            "the environment.")
     def __init__(self):
         healthy_prior = GaussianDistribution(0, 0.3)
         psych_prior = GaussianDistribution(0,1.65)
@@ -351,13 +340,9 @@ class PsychosisPlot(BayesPlot):
         psych_posterior  = PosteriorGaussianDistribution(psych_prior,
                                                            psych_likelihood)
 
-        fig = plt.figure()
-        healthy = (fig.add_axes((0.1,0.6,0.38,0.3)),
-                   fig.add_axes((0.1,0.3,0.38,0.3))
-                   )
-        psych   = (fig.add_axes((0.52,0.6,0.38,0.3)),
-                   fig.add_axes((0.52,0.3,0.38,0.3)))
-        fig.text(0.03, 0.1, self.caption, ha = 'left')
+        self.fig,ax =plt.subplots(nrows = 2, ncols = 2, figsize = (8,6))
+        healthy,psych = ax.transpose()
+        # fig.text(0.03, 0.1, self.caption, ha = 'left')
 
         self.format_axis_prior(healthy[0],healthy_prior,healthy_likelihood)
         healthy[0].set_title("(a) Healthy Response")
@@ -375,12 +360,17 @@ class PsychosisPlot(BayesPlot):
         self.format_axis_post(psych[1], psych_posterior,
                               legend = False)
         psych[1].set_xlabel("Environmental State")
-        self.fig = fig
+
     def __call__(self):
         self.show()
     def show(self):
         self.fig.show()
 
 
-fig = PsychosisPlot()
-fig.show()
+if __name__=="__main__":
+    plt.close("all")
+    HubelWeiselFigure().show()
+    TopDownIllusionFigure().show()
+    PredictiveCodingPlot().show()
+    ContrastResponsePlot().show()
+    PsychosisPlot().show()
