@@ -66,7 +66,7 @@ class RecordingClassSummary:
         return "\n".join(lines_to_print)
 
 
-recording_classes, df, planes = get_classes_of_recording(root="D://")
+recording_classes, df, planes = get_classes_of_recording(root="H://")
 
 
 both_sides_high_contrast = (('affirmative', (False, 1)),
@@ -100,7 +100,7 @@ both_sides_high_contrast_summary = RecordingClassSummary(
                                             both_sides_high_contrast,
                                             recording_classes,
                                             name = "Bilateral High Contrast",
-                                            drive = "D://"
+                                            drive = "H://"
                                             )
 
 left_only_high_contrast_summary = RecordingClassSummary(
@@ -108,14 +108,14 @@ left_only_high_contrast_summary = RecordingClassSummary(
                                             left_only_high_contrast,
                                             recording_classes,
                                             name = "Left High Contrast",
-                                            drive = "D://"
+                                            drive = "H://"
                                             )
 
 low_contrast_summary = RecordingClassSummary(df,
                                             low_contrast,
                                             recording_classes,
                                             name = "Low Contrast",
-                                            drive = "D://"
+                                            drive = "H://"
                                             )
 
 
@@ -129,9 +129,6 @@ low_contrast_summary = RecordingClassSummary(df,
 # data is probably just visual inspection, because we don't need to do it for very
 # many experiments.
 
-We do this by composing two functions - one to go from a list
-of all recordings to a list of lists of each animals recordings,
-one to go from a list of 
 
 def subtype_experiments_by_mouse(ls_of_exp_paths):
     ls_of_exp_paths = copy(ls_of_exp_paths)
@@ -144,7 +141,9 @@ def subtype_experiments_by_mouse(ls_of_exp_paths):
 def manually_group_recordings_by_cortical_area(ls_of_exp_paths):
     plt.ion()
     subgroups = []
-    remaining_exp_paths = copy(ls_of_exp_paths)
+    fig = AnimalMeanVideoFigure(ls_of_exp_paths=ls_of_exp_paths)
+    sucessfully_retreived_paths = fig.ls_of_exp_paths
+    remaining_exp_paths = copy(sucessfully_retreived_paths)
     print("""
           Identify a group of these mean images that show the same
           area of cortex. Provide a space-seperated 0-based list of 
@@ -178,6 +177,7 @@ def manually_group_recordings_by_cortical_area(ls_of_exp_paths):
             print("Something went wrong. Enter a space-seperated list of ints.")
         finally:
             plt.close(fig.fig)
+            plt.close("all")
     return subgroups
            
 def manually_group_recording_class_by_cortical_area(summary_obj):
@@ -189,7 +189,6 @@ def manually_group_recording_class_by_cortical_area(summary_obj):
                 single_mouses_exps)
             )
     #drop multiple recordings of the same cortical area
-    return
     unique_cortical_areas = [random.choice(i) for i in res]
     return_obj = copy(summary_obj)
     return_obj.set_recordings(unique_cortical_areas)
@@ -232,7 +231,7 @@ if __name__=="__main__":
                                                 both_sides_high_contrast,
                                                 recording_classes,
                                                 name = "Bilateral High Contrast",
-                                                drive = "D://"
+                                                drive = "H://"
                                                 )
     
     left_only_high_contrast_summary = RecordingClassSummary(
@@ -240,20 +239,22 @@ if __name__=="__main__":
                                                 left_only_high_contrast,
                                                 recording_classes,
                                                 name = "Left High Contrast",
-                                                drive = "D://"
+                                                drive = "H://"
                                                 )
     
     low_contrast_summary = RecordingClassSummary(df,
                                                 low_contrast,
                                                 recording_classes,
                                                 name = "Low Contrast",
-                                                drive = "D://"
+                                                drive = "H://"
                                                 )
 
     lc_grouped = manually_group_recording_class_by_cortical_area(
         low_contrast_summary)
+    print("YOU'RE 1 THIRD DONE UWU")
     lohc_grouped = manually_group_recording_class_by_cortical_area(
         left_only_high_contrast_summary)
+    print("YOU'RE 2 THRIDS DONE UWU")
     bshc_grouped = manually_group_recording_class_by_cortical_area(
         both_sides_high_contrast_summary)
 

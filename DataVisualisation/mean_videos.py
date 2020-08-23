@@ -40,7 +40,9 @@ class AnimalMeanVideoFigure:
         elif ls_of_exp_paths:
             experiment_paths = ls_of_exp_paths
         mean_images = {}
+        self.ls_of_exp_paths = []
         for experiment_path in experiment_paths:
+            try:
                 ops_path = os.path.join(experiment_path,
                                    "suite2p",
                                    "plane0",
@@ -48,6 +50,9 @@ class AnimalMeanVideoFigure:
                 ops = np.load(ops_path,allow_pickle=True).item()
                 mean_image = ops["meanImgE"]
                 mean_images[experiment_path] = mean_image
+                self.ls_of_exp_paths.append(experiment_path)
+            except FileNotFoundError:
+                pass
         n_exps = len(mean_images)
         
         for width in range(ceil(sqrt(n_exps)),1,-1):
