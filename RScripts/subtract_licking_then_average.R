@@ -1,4 +1,6 @@
 
+source("get_model_pval.r", chdir = TRUE)
+
 collapse.across.time <- function(dat){
   num_trials <- sum(dat$trial_factor==1)
   trials.correct <- dat$correct[dat$trial_factor==1]
@@ -47,68 +49,32 @@ collapse.across.time <- function(dat){
 
 dat <- read.csv("C:/Users/viviani/Desktop/test.csv")
 rois <- unique(dat$ROI_ID)
-dat <- dat[dat$ROI_ID == rois[2],]
 
+licking_model_pvalues = numeric(length(rois))
+licking_significant = 0
+licking_insignificant = 0
+summary_objects = vector(mode = "list", length= length(rois))
+model_pvals = numeric(length(rois))
 
-# Let's fit a naive model first, which doesn't do the licking 
-# subtraction step (collapse across time is implemented elsewhere, 
-# I can send you the function if you want to play along at home). 
-# But it just averages together all the dF_on_F datapoints in the 
-# different trial bins.
-collapsed.before.licking.subtraction <- collapse.across.time(dat)
-lm.no.licking.subtraction<- lm(mean.dF ~ trial.segment + trial.segment:correct
-                                +trial.segment:go,
-                                data = collapsed.before.licking.subtraction)
-
-#Okay, now to fit a licking model so we can subtract off its predictions.
-#We'll fit this model only on intertrial periods so we don't attribute
-#eg Hit-trial-assosiated fluorescence to licking
-outside_trials        <- dat[dat$trial_factor== -999,]
-#Reserve some data for testing
-training_cuttoff      <- floor(0.8*nrow(outside_trials))
-licking.training.data <- outside_trials[1:training_cuttoff,] 
-licking.testing.data  <- outside_trials[-(1:training_cuttoff),]
-
-licking.model <- lm(dF_on_F ~ lick_factor, 
-                    data = licking.training.data) 
-
-# Before we go any further, was the licking model actually any good?
-# We can check by making sure that (1) the model was significant, and 
-# (2) we can no longer get a significant model of the residuals
-# with licking as the independant variable (this idea courtesy of Bill).
-licking.prediction.licktest   <- predict(licking.model, 
-                                         newdata = licking.testing.data)
-licking.testing.data$residuals <- (licking.testing.data$dF_on_F - 
-                                     licking.prediction.licktest)
-snd.order.licking.model<- lm(residuals ~ lick_factor,
-                             data = licking.testing.data)
-
-print("LICKING MODEL (SHOULD BE SIGNIFICANT):")
-print(summary(licking.model))
-cat("\n\nSECOND ORDER LICKING MODEL (SHOULD BE INSIGNIFICANT):")
-print(summary(snd.order.licking.model))
-
-# Okay, now let's get out model that fits residuals after licking
-# subtraction based on trial features
-licking.prediction.everywhere <- predict(licking.model, newdata = dat)
-dat$residuals <- dat$dF_on_F - licking.prediction.everywhere
-residual.dat <- dat
-residual.dat$dF_on_F <- dat$dF_on_F - licking.prediction
-collapsed.after.licking.subtraction <- collapse.across.time(residual.dat)
-
-lm.with.licking.subtraction<- lm(mean.dF ~ trial.segment + trial.segment:correct
-                                  +trial.segment:go,
-                                  data = collapsed.after.licking.subtraction)
-
-#Was our second model better?
-cat("\n\nModel WITHOUT Licking Subtraction")
-print(summary(lm.no.licking.subtraction))
-cat("\n\nModel WITH Licking Subtraction")
-print(summary(lm.with.licking.subtraction))
-
-#We can't get an F-test off an anova because out models
-#have the same number of degrees of freedom, but we
-#can at least get the RSS.
-cat("\n\nANOVA")
-print(anova(lm.no.licking.subtraction,
-            lm.with.licking.subtraction))
+for(i in 1:length(rois)){
+  roi <- rois[i]
+  subset <- dat[dat$ROI_ID==roi]
+  outside_trials        <- dat[dat$trial_factor== -999,]
+  licking.model <- lm(dF_on_F ~ lick_factor, 
+                      data = outside_trials)
+  if(get_lm_pvalue(licking.model)>0.05){
+    licking_insignificant = licking_insignificant + 1
+    licking_model <- lm(dF_on_F ~ 1, data = outside_trials)
+  }
+  licking.prediction <- predict(licking.model, newdata = dat)
+  dat$residuals <- dat$dF_on_F - licking.prediction
+  residual.dat <- dat
+  residual.dat$dF_on_F <- dat$dF_on_F - licking.prediction
+  collapsed.after.licking.subtraction <- collapse.across.time(residual.dat)
+  lm.with.licking.subtraction<- lm(mean.dF ~ trial.segment + trial.segment:correct
+                                    +trial.segment:go,
+                                    data = collapsed.after.licking.subtraction)
+  
+  summary_objects[[i]] <- summary(lm.with.licking.subtraction)
+  model_pvals[[i]] <- get_lm_pvalue(lm.with.licking.subtraction)
+}
