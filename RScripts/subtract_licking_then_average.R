@@ -55,26 +55,38 @@ licking_significant = 0
 licking_insignificant = 0
 summary_objects = vector(mode = "list", length= length(rois))
 model_pvals = numeric(length(rois))
+anovas = vector(mode = "list", length = length(rois))
 
 for(i in 1:length(rois)){
   roi <- rois[i]
-  subset <- dat[dat$ROI_ID==roi]
-  outside_trials        <- dat[dat$trial_factor== -999,]
+  print(roi)
+  subset <- dat[dat$ROI_ID==roi,]
+  outside_trials  <- subset[subset$trial_factor== -999,]
   licking.model <- lm(dF_on_F ~ lick_factor, 
                       data = outside_trials)
   if(get_lm_pvalue(licking.model)>0.05){
     licking_insignificant = licking_insignificant + 1
     licking_model <- lm(dF_on_F ~ 1, data = outside_trials)
   }
-  licking.prediction <- predict(licking.model, newdata = dat)
-  dat$residuals <- dat$dF_on_F - licking.prediction
-  residual.dat <- dat
-  residual.dat$dF_on_F <- dat$dF_on_F - licking.prediction
+  licking.prediction <- predict(licking.model, newdata = subset)
+  subset$residuals <- subset$dF_on_F - licking.prediction
+  residual.dat <- subset
+  residual.dat$dF_on_F <- subset$dF_on_F - licking.prediction
   collapsed.after.licking.subtraction <- collapse.across.time(residual.dat)
   lm.with.licking.subtraction<- lm(mean.dF ~ trial.segment + trial.segment:correct
-                                    +trial.segment:go,
+                                    +trial.segment:go + trial.segment:go:correct,
                                     data = collapsed.after.licking.subtraction)
   
   summary_objects[[i]] <- summary(lm.with.licking.subtraction)
+  anovas[[i]] <- anova(lm.with.licking.subtraction)
   model_pvals[[i]] <- get_lm_pvalue(lm.with.licking.subtraction)
 }
+
+model_pvals     <- p.adjust(model_pvals, method = "fdr")
+rsquareds       <- lapply(summary_objects, function(x) x$adj.r.squared)
+coeffs          <- lapply(summary_objects, function(x) x$coefficients)
+coeff_estimates <- data.frame(do.call(rbind, lapply(coeffs,function(x) x[,"Estimate"])))
+coeff_pvals     <- data.frame(do.call(rbind, lapply(coeffs,function(x) x[,"Pr(>|t|)"])))
+
+anova_frame <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`Pr(>F)`))))
+colnames(anova_frame) <- row.names(anovas[[1]])
