@@ -1,5 +1,11 @@
 
-source("get_model_pval.r", chdir = TRUE)
+get_lm_pvalue <- function (modelobject) {
+  if (class(modelobject) != "lm") stop("Not an object of class 'lm' ")
+  f <- summary(modelobject)$fstatistic
+  p <- pf(f[1],f[2],f[3],lower.tail=F)
+  attributes(p) <- NULL
+  return(p)
+}
 
 collapse.across.time <- function(dat){
   num_trials <- sum(dat$trial_factor==1)
@@ -59,7 +65,6 @@ anovas = vector(mode = "list", length = length(rois))
 
 for(i in 1:length(rois)){
   roi <- rois[i]
-  print(roi)
   subset <- dat[dat$ROI_ID==roi,]
   outside_trials  <- subset[subset$trial_factor== -999,]
   licking.model <- lm(dF_on_F ~ lick_factor, 
