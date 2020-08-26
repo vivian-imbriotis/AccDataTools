@@ -68,7 +68,7 @@ def get_times_until_lick(lick):
         lick = lick.to_numpy()
     end_idx = np.nonzero(lick>0)[0][-1]
     source_array = lick[:end_idx+ 1]
-    append = (-999)*np.ones(len(lick) - end_idx - 1)
+    append = (999)*np.ones(len(lick) - end_idx - 1)
     result = np.zeros(source_array.shape)
     for timepoint, lick in reversed(list(enumerate(source_array))):
         if lick:
@@ -80,7 +80,7 @@ def get_times_until_lick(lick):
     return np.append(result,append)
 
 
-def collapse_lick_timing(time_since,time_to):
+def collapse_lick_timing(time_since,time_to, cuttoff=10):
     '''
     Intended behavior: Return the smaller of time_since or
     time_to at each time point, converting time_to to negative
@@ -104,15 +104,16 @@ def collapse_lick_timing(time_since,time_to):
                             [-1*time_since,
                              time_to])
     timing_info = -1*timing_info
-    timing_info[np.abs(timing_info)>10] = -999
+    timing_info[np.abs(timing_info)>cuttoff] = -999
     
     return timing_info
 
-def lick_transform(lick):
+def lick_transform(lick, cuttoff=10):
     time_since_lick = get_times_since_lick(lick)
     time_until_lick  = get_times_until_lick(lick)
     timing_info = collapse_lick_timing(time_since_lick, 
-                                       time_until_lick)
+                                       time_until_lick,
+                                       cuttoff)
     return timing_info
 
 

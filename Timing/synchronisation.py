@@ -86,7 +86,7 @@ def get_lick_times(timeline_path):
     lick_times = timeline['rawDAQTimestamps'][edges]
     return lick_times
 
-def get_lick_state_by_frame(timeline_path, frame_times):
+def get_lick_state_by_frame(timeline_path = None, frame_times=None, lick_times = None):
     '''
     For each frame, whether one or more licks occurred during the
     time over which that frame was captured.
@@ -105,7 +105,8 @@ def get_lick_state_by_frame(timeline_path, frame_times):
         Number of licks was initiated during the corresponding frame.
 
     '''
-    lick_times = get_lick_times(timeline_path)
+    if not lick_times:
+        lick_times = get_lick_times(timeline_path)
     #For each frame, how many licks occured in the time between that frame
     #and the next?
     #To find this we can just find the cumulative number of licks:
