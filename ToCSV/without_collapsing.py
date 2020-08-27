@@ -178,12 +178,13 @@ def get_whole_dataset(drive, cls=None):
 
 def construct_csv_for_recording_class(csv_path,cls):
     dataset = get_whole_dataset("H:",cls = cls)
-    dataset.to_csv(csv_path)
+    csv = open(csv_path, "w")
+    dataset.to_csv(csv)
     
 if __name__=="__main__":
-    construct_csv_for_recording_class("C:/Users/Vivian Imbriotis/Desktop/left_only_high_contrast.csv",
-                                      "left_only_high_contrast")
-    construct_csv_for_recording_class("C:/Users/Vivian Imbriotis/Desktop/both_sides_high_contrast.csv",
-                                      "both_sides_high_contrast")
-    construct_csv_for_recording_class("C:/Users/Vivian Imbriotis/Desktop/low_contrast.csv",
+    construct_csv_for_recording_class("C:/Users/viviani/Desktop/low_contrast.csv",
                                       "low_contrast")
+    construct_csv_for_recording_class("C:/Users/viviani/Desktop/left_only_high_contrast.csv",
+                                      "left_only_high_contrast")
+    construct_csv_for_recording_class("C:/Users/viviani/Desktop/both_sides_high_contrast.csv",
+                                      "both_sides_high_contrast")
