@@ -41,7 +41,8 @@ class RecordingUnroller(Recording):
         
         #Now  we somehow need to get this into a continuous time series.
         (self.trialtime, self.iscorrect, self.side, self.isgo, self.contrast,
-         self.trial_id, self.trial_num, self.peritrialtime) = self.get_timeseries()
+         self.trial_id, self.trial_num, self.peritrialtime, 
+         self.trial_component) = self.get_timeseries()
         
         self.licks = get_lick_state_by_frame(timeline_path, self.frame_times)
         #This licks is the bool series, we want the deltaT series
@@ -61,15 +62,14 @@ class RecordingUnroller(Recording):
         else:
             if not tolerate_lack_of_eye_video:
                 raise ValueError(f"No associated eyecam footage found at {DLC_ANALYSED_VIDEOS_DIRECTORY}")
-            self.pupil_diameter = [None]*self.ops["nframes"]
+            self.pupil_diameter = [np.nan]*self.ops["nframes"]
 
 
     def get_timeseries(self):
         #When did trials happen in terms of neural frames?
         start_times = np.array([trial.start_stimulus for trial in self.trials]) - 1
-        end_times   = start_times + 5
         start_idxs  = self.frame_times.searchsorted(start_times)
-        end_idxs    = self.frame_times.searchsorted(end_times)
+        end_idxs    = start_idxs + 5*5 #each trial is 5s at 5FPS
         
 
         trial_s     = np.ones(self.ops["nframes"])*(-999)
@@ -79,13 +79,17 @@ class RecordingUnroller(Recording):
         isgo_s      = np.full(self.ops["nframes"],-1)
         con_s       = np.full(self.ops["nframes"],-1,dtype=float)
         id_s        = np.full(self.ops["nframes"],"NA", dtype= object)
+        comp_s      = np.full(self.ops["nframes"],"NA", dtype= object)
         trial_num   = np.zeros(self.ops["nframes"])
+        
+        trial_struct = np.array(["Tone"]*5 + ["Stim"]*10 + ["Resp"]*10)
         
         for idx,(trial, start_idx, end_idx) in enumerate(zip(self.trials, start_idxs, end_idxs)):
             peristart = start_idx - 5*3
             periend = start_idx
             trial_id = self.exp_path.split("\\")[-1] + f" {idx}"
             trial_s[start_idx:end_idx] = np.arange(1,end_idx-start_idx+1)
+            comp_s[start_idx:end_idx] = trial_struct
             peritrial_s[peristart:periend] = np.arange(periend-peristart,0,-1)
             corre_s[start_idx:end_idx] = 1 if trial.correct else 0
             side_s[start_idx:end_idx]  = 'Left' if trial.isleft else 'Right'
@@ -93,18 +97,21 @@ class RecordingUnroller(Recording):
             con_s[start_idx:end_idx]  = trial.contrast
             id_s[start_idx:end_idx] = trial_id
             trial_num[start_idx:] += 1
-        return (trial_s,corre_s,side_s,isgo_s,con_s,id_s,trial_num,peritrial_s)
+        return (trial_s,corre_s,side_s,isgo_s,con_s,id_s,trial_num,peritrial_s,
+                comp_s)
     
     def to_unrolled_records(self):
         results = []
         ROI_IDs = self.trials[0].ROI_identifiers
         for roi_df, roi_spks, roi_id in zip(self.dF_on_F, self.spks, ROI_IDs):
-            for idx,(df, spk, trialtime, peritrialtime, correct, side, go,contrast,
+            for idx,(df, spk, trialtime, peritrialtime, comp, correct, side, go,
+                     contrast,
                      lick, pupil, frametime, trial_id, trial_num) in enumerate(zip(
                                                             roi_df,
                                                             roi_spks,
                                                             self.trialtime,
                                                             self.peritrialtime,
+                                                            self.trial_component,
                                                             self.iscorrect,
                                                             self.side,
                                                             self.isgo,
@@ -125,6 +132,7 @@ class RecordingUnroller(Recording):
                             "time": frametime,
                             "trial_factor": trialtime,
                             "peritrial_factor":peritrialtime,
+                            "trial_component":comp,
                             "dF_on_F": df,
                             "spks": spk,
                             "lick_factor": lick,
@@ -181,4 +189,6 @@ if __name__=="__main__":
     #     append_recording_to_csv(file, "H:/Local_Repository/CFEB040/2017-01-27_01_CFEB040",
     #                             ignore_dprime=True)
     
-    pass        
+    df = RecordingUnroller(
+        "D:\\Local_Repository\\CFEB014\\2016-07-05_03_CFEB014",
+        tolerate_lack_of_eye_video=True).to_dataframe()

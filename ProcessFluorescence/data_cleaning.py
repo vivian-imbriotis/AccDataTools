@@ -14,10 +14,11 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
+import seaborn as sb
 from random import randint
 
 
-def merge_rois(roi_array):
+def merge_rois(roi_array, spks=None, iscell=None):
     '''
     Merge together ROI traces with a pairwise pearson's R above 0.9.
     
@@ -36,27 +37,36 @@ def merge_rois(roi_array):
     df = pd.DataFrame(data = roi_array.transpose(), 
                       index = range(timepoints),
                       columns = range(rois))
-    output = merge_correlated_columns(df)
-    
+    output, graph = merge_correlated_columns(df, return_graph=True)
     merged_roi_array = output.to_numpy().transpose()
+    
+    if spks is not None and iscell is not None:
+        df = pd.DataFrame(data = spks.transpose(), 
+                  index = range(timepoints),
+                  columns = range(rois))
+        merged_spks_array = merge_correlated_columns(df,graph=graph).to_numpy().transpose()>0
+        df = pd.DataFrame(data = iscell[np.newaxis,:], 
+                  index = (0,),
+                  columns = range(rois))
+        merged_iscell_array = merge_correlated_columns(df,graph=graph).to_numpy().reshape((-1))>0
+        return (merged_roi_array,merged_spks_array,merged_iscell_array)
     return merged_roi_array
 
 
 
-def merge_correlated_columns(df):
-    adjacency_matrix = get_adj_matr(df)
-    nodes            = adjacency_matrix.columns
-    edges            = ls_of_edges_from_adj_matr(adjacency_matrix)
-    graph            = construct_graph_from(nodes,
-                                            edges)
+def merge_correlated_columns(df, graph = None, return_graph=False):
     new_df = pd.DataFrame()
-    
-    #nx.draw(graph, with_labels = True)
+    if type(graph)==type(None):
+        adjacency_matrix = get_adj_matr(df)
+        nodes            = adjacency_matrix.columns
+        edges            = ls_of_edges_from_adj_matr(adjacency_matrix)
+        graph            = construct_graph_from(nodes,
+                                                edges)
     for component in nx.connected_components(graph):
         name = ", ".join(str(component))
         name = f"[{name}]"
         new_df[name] = df[component].mean(axis='columns')
-    return new_df
+    return new_df if not return_graph else (new_df, graph)
         
 
 
@@ -158,12 +168,10 @@ def unit_test2():
         base = np.random.uniform(0,1,size=TIMEPOINTS)
         if clusters>0:
             for _ in range(NUM_PER_CLUSTER):
-                print("a")
                 data[i] = base + np.random.uniform(-NOISE/2,NOISE/2,size=TIMEPOINTS)
                 i+=1
             clusters -= 1
         else:
-            print('b')
             data[i] = base
             i+=1
 
@@ -178,4 +186,5 @@ def unit_test2():
     
 
 if __name__=="__main__":
+    sb.set_style("dark")
     data = unit_test2()

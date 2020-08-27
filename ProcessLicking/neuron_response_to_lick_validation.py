@@ -12,14 +12,14 @@ import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 
 
-from accdatatools.Utils.path import exp_path
+from accdatatools.Utils.path import get_exp_path
 from accdatatools.Observations.recordings import Recording
-from accdatatools.Timing.synchonisation import (get_neural_frame_times,
+from accdatatools.Timing.synchronisation import (get_neural_frame_times,
                                                  get_lick_state_by_frame)
 
 
 experiment_ID = "2016-10-07_03_CFEB027"
-experiment_path = exp_path(experiment_ID, "H:\\")
+experiment_path = get_exp_path(experiment_ID, "H:\\")
 
 suite2p_path = os.path.join(experiment_path,
                             "suite2p",

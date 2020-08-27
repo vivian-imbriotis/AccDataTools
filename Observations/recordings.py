@@ -19,6 +19,8 @@ from accdatatools.Utils.path import get_timeline_path, get_exp_id
 from accdatatools.Timing.synchronisation import get_lick_times
 from accdatatools.ProcessFluorescence.data_cleaning import merge_rois
 
+import accdatatools.ProcessFluorescence.df_on_f_calculations as df
+
 
 class Recording:
     def __init__(self, path):
@@ -50,15 +52,18 @@ class Recording:
             self.Fneu = np.abs(self.Fneu)
     
             #Calculate deltaF/F
-            self.Fcorr = np.maximum(self.F - 0.8*self.Fneu,1)
-            self.F0 = self.running_min(self.Fcorr, 30, 100)
-            self.dF_on_F = np.maximum((self.Fcorr - self.F0) / self.F0,0.01)
-            
-            self.dF_on_F_merged = merge_rois(self.dF_on_F)
+            self.Fcorr = df.subtract_neuropil_trace(self.F, self.Fneu)
+            self.F0 = df.get_smoothed_running_minimum(self.Fcorr)
+            self.dF_on_F = df.get_df_on_f0(self.Fcorr,self.F0)
             
             #Get the deconvoluted spiking data and then binarise it
             self.spks = (np.load('spks.npy') > 0)
             self.iscell = np.load("iscell.npy")[:,0].astype(np.bool)
+            
+            #Merge together highly correlated ROIs
+            self.dF_on_F, self.spks,self.iscell = merge_rois(self.dF_on_F,
+                                                             self.spks,
+                                                             self.iscell)
             
             timeline_path = get_timeline_path(self.exp_path)
             self.lick_times = get_lick_times(timeline_path)
@@ -143,8 +148,7 @@ class Recording:
             a.set_xticks([])
         return fig
     
-    def plot_slopes_and_intercepts(self):
+    def seigel_regression(self):
         seaborn.set()
         slope, intercept = siegelslopes(self.F[0],self.Fneu[0])
-        fig, ax = plt.subplots(nrows = 2, ncols = 1)
         print(f"F = Fneu * {slope} + {intercept}")
