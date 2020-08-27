@@ -72,8 +72,8 @@ class KernelExampleFigure:
         
         
 class LinearApproximationFigure(KernelExampleFigure):
-    licks = (3,)
-    rewards = (6,)
+    licks = (1.4,6,6.5,9)
+    rewards = (3,8)
     
     def lin_approx_predict(self):
         time = np.linspace(0,12,180)
@@ -82,20 +82,14 @@ class LinearApproximationFigure(KernelExampleFigure):
         reward_prediction = lick_prediction = np.zeros(time.shape)
         
         lick_kernels = (lick_transform(lick_vector,15)+15).astype(int)
-
-        for idx,val in enumerate(lick_prediction):
-            proposed_idx = lick_kernels[idx]
-            lick_prediction[idx] = self.lick_kernel_series[proposed_idx] if proposed_idx>-1 else 0
+        
+        lick_prediction = np.array([self.lick_kernel_series[i] if i>-1 else 0 for i in lick_kernels])
 
         reward_kernels = (lick_transform(reward_vector,15)+15).astype(int)
-        for idx,val in enumerate(reward_prediction):
-            proposed_idx = reward_kernels[idx]
-            reward_prediction[idx] = self.reward_kernel_series[proposed_idx] if proposed_idx>-1 else 0
+        reward_prediction = np.array([self.reward_kernel_series[i] if i>-1 else 0 for i in reward_kernels])
+        
         prediction = lick_prediction + reward_prediction
-        plt.plot(time,lick_vector)
-        plt.plot(time,reward_vector)
-        plt.show()
-        print(prediction)
+        prediction = np.concatenate((np.zeros(14),prediction[:-14]))
         return (time,prediction)
     
     def __init__(self):
@@ -122,14 +116,16 @@ class LinearApproximationFigure(KernelExampleFigure):
         event_train.vlines(self.licks,0,1,colors = 'blue',label='lick')
         event_train.vlines(self.rewards,0,1,colors='orange',label='rewards')
         event_train.legend()
-        prediction.set_title("(D) Predicted Fluoresence Response")
+        prediction.set_title("(D) Kernel Approach")
         prediction.set_xlabel("time")
         prediction.set_ylabel("∆f/f")
         prediction.plot(*self.predict(),color='k')
-        approximation.set_title("(D) Predicted Fluoresence Response")
+        ylim = prediction.get_ylim()
+        approximation.set_title("(E) Kernel-like Linear Regression")
         approximation.set_xlabel("time")
         approximation.set_ylabel("∆f/f")
         approximation.plot(*self.lin_approx_predict(),color='k')
+        approximation.set_ylim(ylim)
         for lick in self.licks:
             for axis in (prediction, approximation):
                 axis.plot(np.linspace(lick-0.2,lick+2,31),
