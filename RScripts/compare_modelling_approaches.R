@@ -31,8 +31,8 @@ collapse.across.time <- function(dat){
   mean.df.stim <- colSums(matrix(df.stim,10))/10
   
   df.resp <- dat$dF_on_F[dat$trial_factor>15]
-  df.resp <- df.resp[1:(11*(length(df.resp) %/% 11))]/11
-  mean.df.resp <- colSums(matrix(df.resp,11))/11
+  df.resp <- df.resp[1:(10*(length(df.resp) %/% 10))]/10
+  mean.df.resp <- colSums(matrix(df.resp,10))/10
   result_idx = seq(1,3*length(mean.df.tone),3)
   result$mean.dF[result_idx+0]       <- mean.df.tone
   result$trial.segment[result_idx+0] <- "Tone"
@@ -55,36 +55,56 @@ collapse.across.time <- function(dat){
 #Let's start out by getting a single ROI from a single recording.
 
 dat <- read.csv("C:/Users/viviani/Desktop/test.csv")
+dat$correct <- as.factor(dat$correct)
+dat$go <- as.factor(dat$go)
+
 rois <- unique(dat$ROI_ID)
+n <- length(rois)
 
-licking_model_pvalues = numeric(length(rois))
-licking_significant = 0
-licking_insignificant = 0
-summary_objects = vector(mode = "list", length= length(rois))
+full.model.pvals <- numeric(n)
+full.model.stats <- numeric(n)
+full.model.rsqds <- numeric(n)
 
-roi <- rois[[6]]
+collapsed.model.pvals <- numeric(n)
+collapsed.model.stats <- numeric(n)
+collapsed.model.rsqds <- numeric(n)
 
-subset <- dat[dat$ROI_ID==roi,]
-outside_trials  <- subset[subset$trial_factor== -999,]
-licking.model <- lm(dF_on_F ~ lick_factor, 
-                    data = outside_trials)
 
-if(get_lm_pvalue(licking.model)>0.05){
-  licking_insignificant = licking_insignificant + 1
-  licking_model <- lm(dF_on_F ~ 1, data = outside_trials)
+
+for (i in 1:n){
+  roi <- rois[[i]]
+  
+  roidat <- dat[dat$ROI_ID==roi,]
+  outside_trials  <- roidat[roidat$trial_factor== -999,]
+  licking.model <- lm(dF_on_F ~ lick_factor, 
+                      data = outside_trials)
+  
+  if(get_lm_pvalue(licking.model)>0.05){
+    licking_insignificant = licking_insignificant + 1
+    licking_model <- lm(dF_on_F ~ 1, data = outside_trials)
+  }
+  
+  licking.prediction <- predict(licking.model, newdata = roidat)
+  roidat$residuals <- roidat$dF_on_F - licking.prediction
+  residual.dat <- roidat
+  residual.dat$dF_on_F <- roidat$dF_on_F - licking.prediction
+  collapsed.after.licking.subtraction <- collapse.across.time(residual.dat)
+  collapsed.model<- lm(mean.dF ~ trial.segment + trial.segment:correct
+                                   +trial.segment:go + trial.segment:go:correct,
+                                   data = collapsed.after.licking.subtraction)
+  
+  full.model <- lm(dF_on_F ~ as.factor(lick_factor) + as.factor(trial_factor) + 
+                go:as.factor(trial_factor) + correct:as.factor(trial_factor),
+              data = roidat[roidat$trial_factor!=-999,])
+  
+  full.model.test <- lmtest::dwtest(full.model,tol = 0)
+  full.model.pvals[i] <- full.model.test$p.value
+  full.model.stats[i] <- full.model.test$statistic
+  full.model.rsqds[i] <- summary(full.model)$adj.r.squared
+  
+  collapsed.model.test<- lmtest::dwtest(collapsed.model)
+  collapsed.model.pvals[i] <- collapsed.model.test$p.value
+  collapsed.model.stats[i] <- collapsed.model.test$statistic
+  collapsed.model.rsqds[i] <- summary(collapsed.model)$adj.r.squared
 }
 
-licking.prediction <- predict(licking.model, newdata = subset)
-subset$residuals <- subset$dF_on_F - licking.prediction
-residual.dat <- subset
-residual.dat$dF_on_F <- subset$dF_on_F - licking.prediction
-collapsed.after.licking.subtraction <- collapse.across.time(residual.dat)
-lm.with.licking.subtraction<- lm(mean.dF ~ trial.segment + trial.segment:correct
-                                 +trial.segment:go + trial.segment:go:correct,
-                                 data = collapsed.after.licking.subtraction)
-
-full.model <- lm(df~trial_kernel + trial_kernel:side + trial_kernell:correct +
-                 trial_kernel:go + lick_kernel, data = subset)
-
-lmtest::dwtest(full.model)
-lmtest::dwtest(lm.with.licking.subtraction)
