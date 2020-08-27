@@ -163,7 +163,8 @@ def append_recording_to_csv(filestream,path, ignore_dprime=False):
 def get_whole_dataset(drive, cls=None):
     result = []
     def func(path):
-        recorder = RecordingUnroller(path, True)
+        recorder = RecordingUnroller(path, ignore_dprime = True, 
+                                     tolerate_lack_of_eye_video = True)
         df = recorder.to_dataframe()
         del recorder
         result.append(df)
@@ -175,20 +176,14 @@ def get_whole_dataset(drive, cls=None):
     result = pd.concat(result,ignore_index=True)
     return result
 
+def construct_csv_for_recording_class(csv_path,cls):
+    dataset = get_whole_dataset("H:",cls = cls)
+    dataset.to_csv(csv_path)
+    
 if __name__=="__main__":
-    # #First, delete all existing file contents
-    # open("C:/Users/Vivian Imbriotis/Desktop/dataset.csv",'w').close()
-    # #Reopen in append mode and append each experiment
-    # csv = open("C:/Users/Vivian Imbriotis/Desktop/dataset.csv", 'a')
-    # func = lambda path:append_recording_to_csv(csv,path,True)
-    # # apply_to_all_one_plane_recordings("E:\\", func)
-    # func("D:\\Local_Repository\\CFEB026\\2016-09-21_05_CFeb026")
-    # csv.close()
-    
-    # with open("C:/Users/viviani/Desktop/test.csv","w") as file:
-    #     append_recording_to_csv(file, "H:/Local_Repository/CFEB040/2017-01-27_01_CFEB040",
-    #                             ignore_dprime=True)
-    
-    df = RecordingUnroller(
-        "D:\\Local_Repository\\CFEB014\\2016-07-05_03_CFEB014",
-        tolerate_lack_of_eye_video=True).to_dataframe()
+    construct_csv_for_recording_class("C:/Users/Vivian Imbriotis/Desktop/left_only_high_contrast.csv",
+                                      "left_only_high_contrast")
+    construct_csv_for_recording_class("C:/Users/Vivian Imbriotis/Desktop/both_sides_high_contrast.csv",
+                                      "both_sides_high_contrast")
+    construct_csv_for_recording_class("C:/Users/Vivian Imbriotis/Desktop/low_contrast.csv",
+                                      "low_contrast")
