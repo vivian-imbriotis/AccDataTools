@@ -104,6 +104,14 @@ def apply_to_all_recordings(drive,func,verbose=False):
                 except (FileNotFoundError,ValueError) as e:
                     if verbose: print(f"LOG: {func.__name__} on {recording} resulted in {e}")
 
+def iterate_across_recordings(drive):
+    root = os.path.join(drive, 'Local_Repository')
+    for animal in os.listdir(root):
+        animal_path = os.path.join(root,animal)
+        if os.path.isdir(animal_path):
+            for recording in os.listdir(animal_path): 
+                yield os.path.join(animal_path,recording)
+    return
 
 def apply_to_all_recordings_of_class(cls, drive, func, verbose=True):
     '''
