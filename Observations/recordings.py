@@ -152,3 +152,4 @@ class Recording:
         seaborn.set()
         slope, intercept = siegelslopes(self.F[0],self.Fneu[0])
         print(f"F = Fneu * {slope} + {intercept}")
+
