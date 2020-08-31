@@ -19,9 +19,6 @@ from scipy.ndimage.filters import minimum_filter1d, uniform_filter1d
 from accdatatools.Observations.recordings import Recording
 import pickle as pkl
 
-DEFAULT_K = 10
-
-
 #Load a recording
 try:
     with open(r"C:/Users/viviani/desktop/cache.pkl","rb") as file:
@@ -31,9 +28,22 @@ except (FileNotFoundError, EOFError):
         rec = Recording(r"D:\Local_Repository\CFEB013\2016-05-31_02_CFEB013")
         pkl.dump(rec,file)
 
+def heaviside(X,k=200):
+    '''
+    Analytic approximation of the heaviside function.
+    Approaches Heaviside(x) as K goes to +inf
+    '''
+    return 1/(1+np.exp(-2*k*X))
 
 def ramp(X):
     return X*(X>0)
+
+def squash(X,a=100):
+    '''
+    Squashes X from positive reals to the [0,1) half-open
+    interval.
+    '''
+    return 1 - np.exp(-(X/a)**2)
 
 
 def original_loss(params, x, y):
@@ -55,13 +65,61 @@ def original_grad(params, x, y, diracs = False):
         theta_1 = -np.sum(x*[residuals > 0])
     return (theta_0, theta_1)
 
-
+def plot_loss(i):
+    X = np.arange(-200, 300, 12.5)
+    Y = np.arange(-5, 5, 0.25)
+    X, Y = np.meshgrid(X, Y)
+    Z = np.vectorize(lambda x,y:original_loss((x,y),rec.Fneu[i],rec.F[i]))(X,Y)
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    ax.plot_surface(X,Y,np.log(Z))
+    ax.set_xlabel("Intercept")
+    ax.set_ylabel("Slope")
+    ax.set_zlabel("Loss")
+    ax.set_title("Loss Function")
+    fig2, ax = plt.subplots(ncols = 2)
+    U,V = np.vectorize(lambda x,y:original_grad(
+        (x,y),rec.Fneu[i],rec.F[i],diracs = False))(X,Y)
+    ax[0].quiver(X,Y,U,V, angles = "xy")
+    U,V = np.vectorize(lambda x,y:original_grad(
+        (x,y),rec.Fneu[i],rec.F[i],diracs = True))(X,Y)
+    ax[1].quiver(X,Y,U,V, angles = "xy")
+    ax[1].set_title("Gradient of Loss (with approximated diracs)")
+    for a in ax:
+        a.set_xlabel("Intercept")
+        a.set_ylabel("Slope")
+    ax[0].set_title("Gradient of Loss (excluding diracs)")
+    plt.show()
 
 K = 1
     
+def loss(params, x = rec.Fneu[4], y = rec.F[4], v=True, k = 1, a = 1):
+    '''
+    As a one-liner this is
+    (1-exp(-ramp(x)**2)) + N*1/(1 + exp(2Kx)) + ramp(-x)
+    where x is a residual, summed for all residuals
+    '''
+    guess = params[0] + params[1] * x
+    residuals = y - guess #data points above line are positive
+    residuals_cost = squash(np.sum(ramp(residuals)),a)
+    negativity_cost = np.sum(heaviside(-residuals,k) + ramp(-residuals))
+    cost = residuals_cost + negativity_cost
+    return cost
 
+def grad(params, x = rec.Fneu[4], y = rec.F[4], k = 1, a = 1):
+    N = len(x) if hasattr(x,"__len__") else 1
+    guess = params[0] + params[1] * x
+    residuals = y - guess #data points above line are positive
+    term1 = 2*residuals*np.exp(-((np.sum(ramp(residuals)))/a)**2)/(a**2)*heaviside(residuals,k)
+    log_term2 = np.log(2*k*N) + 2*k*residuals - 2*np.log(1+np.exp(2*k*residuals))
+    term2 = np.exp(log_term2)
+    term3 = heaviside(residuals,k)
+    outer_derivative = term1 + term2 + term3
+    theta_0 = np.sum(outer_derivative) * (-1)
+    theta_1 = np.sum(outer_derivative * (-x))
+    return (theta_0, theta_1)
 
-def qloss(params,x = rec.Fneu[4], y = rec.F[4],k=DEFAULT_K,v=False):
+def qloss(params,x = rec.Fneu[4], y = rec.F[4],k=4,v=False):
     guess = params[0] + params[1] * x
     residuals = y - guess #data points above line are positive
     upper_cost = np.sum(ramp(residuals)**2)
@@ -69,7 +127,7 @@ def qloss(params,x = rec.Fneu[4], y = rec.F[4],k=DEFAULT_K,v=False):
     cost = upper_cost + lower_cost
     return cost
 
-def qgrad(params,x = rec.Fneu[4], y = rec.F[4],k=DEFAULT_K,v=False):
+def qgrad(params,x = rec.Fneu[4], y = rec.F[4],k=4,v=False):
     guess = params[0] + params[1] * x
     res = y - guess #data points above line are positive
     outer_derivative = (res>0)*(2*res)+(res<0)*(2*k*res**(2*k-1))
@@ -83,7 +141,7 @@ def normalize(x,y):
     norms = np.linalg.norm(vector,axis=0)
     return vector / norms
 
-def plot_quadratic_loss(i):
+def plot_clever_loss(i):
     plt.close('all')
     X = np.arange(-200, 300, 12.5)
     Y = np.arange(-5, 5, 0.25)
@@ -107,6 +165,8 @@ def plot_quadratic_loss(i):
     plt.show()
 
 
+dirac = norm(0,1e-2).pdf
+
 
 def guess(x, y):
     slope, intercept, r_value, p_value, std_err = linregress(x,y)
@@ -125,13 +185,24 @@ def underline_regression(x, y, method = "Powell"):
                    x0 = start_params,
                    jac = qgrad,
                    args = (x, y),
-                   bounds = ((None,None), (0, None)),
+                   bounds = ((None,None), (0, 1)),
                    method = "L-BFGS-B")
         print(reg.x)
     else:
-        raise ValueError()
+        reg = minimize(loss,
+                       x0 = start_params,
+                       jac = grad,
+                       args = (x,y),
+                       method = "CG")
     return (reg.x[0], reg.x[1])
 
+
+def robust_regression(x, y):
+    y = y.reshape(-1, 1)
+    X = np.vstack((np.ones(y.shape).transpose(), x.reshape(-1, 1).transpose()))
+    reg = TheilSenRegressor(random_state=0).fit(X.transpose(), np.ravel(y))
+
+    return (reg.coef_[0], reg.coef_[1])
 
 def subtract_bg(f, bg, theta):
     return f - ( theta[0] + theta[1] * bg)
@@ -141,7 +212,6 @@ def get_smoothed_running_minimum(timeseries, tau1 = 30, tau2 = 100):
                             tau2,
                             mode = 'reflect')
     return result
-
 
 def get_df_on_f0(F,F0=None):
     if type(F0)!=type(None):
@@ -157,7 +227,7 @@ class UnderlineRegressionFigure:
     # color[1] = 'orange'
     # color[2] = 'green'
     # color[3] = 'red'
-    def __init__(self, recording, roi_number, method = 'BFGS'):
+    def __init__(self, recording, roi_number, method = 'robust'):
         sns.set_style("dark")
         sns.set_context("paper")
         robust = method in ('robust','seigel','theil sen')
@@ -165,7 +235,11 @@ class UnderlineRegressionFigure:
                       recording.F[roi_number,:], 
                       recording.Fneu[roi_number,:]
                               ),axis=-1)
-        if method in ("BFGS","grad descent", "gradient descent"):
+        if robust:
+            robust_theta = robust_regression(f[:,2], f[:,1])
+            robust_f = subtract_bg(f[:,1], f[:,2], robust_theta)
+            robust_df_f = get_df_on_f0(robust_f)
+        elif method in ("BFGS","grad descent", "gradient descent"):
             alt_theta = underline_regression(f[:,2], f[:,1],method="BFGS")
             alt_f = subtract_bg(f[:,1], f[:,2], alt_theta)
             alt_df_f = get_df_on_f0(alt_f)
@@ -182,14 +256,19 @@ class UnderlineRegressionFigure:
         underline_theta = underline_regression(f[:,2], f[:,1])
         underline_f = subtract_bg(f[:,1], f[:,2], underline_theta)
         underline_df_f = get_df_on_f0(underline_f)
+    
+        
         
         self.fig = plt.figure(figsize=(8,4),tight_layout=True)
         
         regression_axis = self.fig.add_axes((0.075,0.1,0.4,0.85))
         regression_axis.plot(f[:,2], f[:,1], 'o', color = self.color[0])
-
-        regression_axis.plot(f[:,2], alt_theta[0] + alt_theta[1]*f[:,2], label = f'Underline Regression with {method} method',
-                             color = self.color[1])
+        if robust:
+            regression_axis.plot(f[:,2], robust_theta[0] + robust_theta[1]*f[:,2], label = 'Theil-Sen Estimator Regression',
+                                 color = self.color[1])
+        else:
+            regression_axis.plot(f[:,2], alt_theta[0] + alt_theta[1]*f[:,2], label = f'Underline Regression with {method} method',
+                                 color = self.color[1])
         regression_axis.plot(f[:,2], underline_theta[0] + underline_theta[1]*f[:,2], label = 'Underline Regression with Powell method',
                              color = self.color[2])
         regression_axis.set_ylabel('Cell Fluorescence')
@@ -198,12 +277,19 @@ class UnderlineRegressionFigure:
 
         
         alt_axis = self.fig.add_axes((0.55,0.5,0.4,0.4))
+        if robust:
+            alt_axis.plot(robust_df_f, label = 'Theil-Sen Estimator Regression',
+                          color = self.color[1])
 
-        alt_axis.plot(alt_df_f, label = f'Underline Regression with {method} Method',
-                      color = self.color[1])
+        else:
+            alt_axis.plot(alt_df_f, label = f'Underline Regression with {method} Method',
+                          color = self.color[1])
         alt_axis.set_ylabel('DF/F')
+        # theilsen_axis.set_xlabel('Sample')
         alt_axis.set_xticks([])
         alt_axis.legend(loc='upper right')
+            
+        
         underline_axis = self.fig.add_axes((0.55,0.1,0.4,0.4))
         underline_axis.plot(underline_df_f, label = 'Underline Regression with Powell Method',
                             color=self.color[2])
@@ -239,7 +325,6 @@ class ThreeKindsOfRegressionFigure(UnderlineRegressionFigure):
         boring_axis.set_xticks([])
         boring_axis.legend(loc='upper right')
 
-
 class DescentFigure:
     def __init__(self,recording = rec, i = 4):
         self.f = np.stack((np.zeros(recording.F[i,:].shape),
@@ -264,11 +349,10 @@ class DescentFigure:
                    x0 = start_params,
                    jac = qgrad,
                    args = (x, y),
-                   bounds = ((None, None), (0, None)),
+                   bounds = ((None, None), (0, 1)),
                    method = "L-BFGS-B")
         return reg
 
 plt.close('all')
 
-
-ThreeKindsOfRegressionFigure(rec,4).show()
+UnderlineRegressionFigure(rec, 9, method = "BFGS").show()

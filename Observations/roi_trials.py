@@ -168,8 +168,9 @@ def load_all_trials(path):
 
 
 if __name__ == "__main__":
-    dump_all_trials_in_dataset_to_pkl_file("H:", "all_one_plane_trials.pkl")
-    trials = load_all_trials("all_one_plane_trials.pkl")
+    from accdatatools.Observations.trials import get_trials_in_recording
+    from accdatatools.Utils.path import get_exp_path
+    trials = get_trials_in_recording(get_exp_path("2016-11-01_03_CFEB027","D:\\"))
     rois = ls_of_ROIs_from_ls_of_Trials(trials)
     del trials
     plotter = ROIActivitySummaryFactory(rois)

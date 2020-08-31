@@ -6,13 +6,18 @@ Created on Fri Aug  7 15:06:01 2020
 """
 import numpy as np
 from scipy.ndimage.filters import minimum_filter1d, uniform_filter1d
+from accdatatools.ProcessFluorescence.vectorised_underline_regression import UnderlineRegressor
 
 
+# def subtract_neuropil_trace(F, Fneu, alpha = 0.8):
+#     subtracted_trace =  F - alpha*Fneu
+#     #add values until the lowest point has unit fluorescence
+#     return subtracted_trace - np.min(subtracted_trace) + 1
 
-def subtract_neuropil_trace(F, Fneu, alpha = 0.8):
-    subtracted_trace =  F - alpha*Fneu
-    #add values until the lowest point has unit fluorescence
-    return subtracted_trace - np.min(subtracted_trace) + 1
+def subtract_neuropil_trace(F, Fneu):
+    alpha,beta = UnderlineRegressor.regress_all(Fneu,F)
+    subtracted_trace =  F - Fneu*beta[:,None] - alpha[:,None]
+    return subtracted_trace
 
 def get_smoothed_running_minimum(timeseries, tau1 = 30, tau2 = 100):
     mode = 'nearest'

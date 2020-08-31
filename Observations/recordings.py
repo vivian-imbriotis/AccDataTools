@@ -147,9 +147,6 @@ class Recording:
             a.plot(val)
             a.set_xticks([])
         return fig
-    
-    def seigel_regression(self):
-        seaborn.set()
-        slope, intercept = siegelslopes(self.F[0],self.Fneu[0])
-        print(f"F = Fneu * {slope} + {intercept}")
+
+
 
