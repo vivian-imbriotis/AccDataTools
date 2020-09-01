@@ -55,12 +55,11 @@ class UnderlineRegressor:
                                args = (x, y, k),
                                bounds = ((None,None), (0, None)),
                                method = "L-BFGS-B")
-                    break
+                    k+=1
                 except FloatingPointError:
-                    k-=1
-                    if k==1: raise FloatingPointError()
-                
-        return (reg.x[0], reg.x[1])
+                    break
+        intercept = reg.x[0] - ramp(np.max(reg.x[0]+x*reg.x[1] - y))
+        return (intercept, reg.x[1])
     @classmethod
     def regress_all(cls,X,Y):
         res = []

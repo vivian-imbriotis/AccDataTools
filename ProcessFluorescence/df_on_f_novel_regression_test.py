@@ -19,7 +19,7 @@ from scipy.ndimage.filters import minimum_filter1d, uniform_filter1d
 from accdatatools.Observations.recordings import Recording
 import pickle as pkl
 
-DEFAULT_K = 10
+DEFAULT_K = 20
 
 
 #Load a recording
@@ -32,8 +32,11 @@ except (FileNotFoundError, EOFError):
         pkl.dump(rec,file)
 
 
+
 def ramp(X):
     return X*(X>0)
+
+dirac = norm(0,10).pdf
 
 
 def original_loss(params, x, y):
@@ -43,6 +46,7 @@ def original_loss(params, x, y):
     lower_cost = np.sum(K * (residuals < 0))
     cost = upper_cost + lower_cost
     return cost
+
 
 def original_grad(params, x, y, diracs = False):
     guess = params[0] + params[1] * x
@@ -127,7 +131,7 @@ def underline_regression(x, y, method = "Powell"):
                    args = (x, y),
                    bounds = ((None,None), (0, None)),
                    method = "L-BFGS-B")
-        print(reg.x)
+        print(reg.message)
     else:
         raise ValueError()
     return (reg.x[0], reg.x[1])
