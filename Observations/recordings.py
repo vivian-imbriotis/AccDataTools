@@ -101,16 +101,6 @@ class Recording:
                          "iscell.npy"),
             iscell)
     
-    @staticmethod
-    def running_min(X,tau1,tau2):
-        ###DEBUGGING IMPLEMENTATION###
-        # return minimum_filter1d(X,tau2,mode = 'nearest')
-        ###PRIMARY IMPLEMENTATION###
-        mode = 'nearest'
-        result = minimum_filter1d(uniform_filter1d(X,tau1,mode=mode),
-                                tau2,
-                                mode = 'reflect')
-        return result
 
 
     def plot_cell_pipeline(self,cell_id):
@@ -149,4 +139,6 @@ class Recording:
         return fig
 
 
-
+if __name__=="__main__":
+    from accdatatools.Utils.path import get_exp_path
+    rec = Recording((r"D:\Local_Repository\CFEB026\2016-09-23_02_CFEB026"))
