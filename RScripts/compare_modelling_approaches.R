@@ -1,5 +1,4 @@
-source_file <- "C:/Users/viviani/Desktop/single_experiments_for_testing/2016-11-01_03_CFEB027.csv"
-remove_inflated_values <- TRUE
+source_file <- "C:/Users/viviani/Desktop/single_experiments_for_testing/2016-11-05_03_CFEB029.csv"
 
 set.seed(123456789)
 
@@ -62,6 +61,7 @@ collapse.across.time <- function(dat){
 #Let's start out by getting a single ROI from a single recording.
 
 dat <- read.csv(source_file)
+dat <- dat[!is.na(dat$dF_on_F),]
 dat$correct <- as.factor(dat$correct)
 dat$go <- as.factor(dat$go)
 
@@ -82,10 +82,6 @@ collapsed.model.shapiro.stat <- numeric(n)
 for (i in 1:n){
   roi <- rois[[i]]
   roidat <- dat[dat$ROI_ID==roi,]
-  if(remove_inflated_values){
-    inflated_val <- names(table(roidat$dF_on_F)[1])
-    roidat[roidat$dF_on_F == inflated_val,"dF_on_F"] <- NA
-  }
   outside_trials  <- roidat[roidat$trial_factor== -999,]
   licking.model <- lm(dF_on_F ~ lick_factor, 
                       data = outside_trials)
@@ -99,10 +95,11 @@ for (i in 1:n){
   residual.dat <- roidat
   residual.dat$dF_on_F <- roidat$dF_on_F - licking.prediction
   collapsed.after.licking.subtraction <- collapse.across.time(residual.dat)
+
   collapsed.model<- lm(mean.dF ~ trial.segment + trial.segment:correct
                                    +trial.segment:go + trial.segment:go:correct,
                                    data = collapsed.after.licking.subtraction)
-  
+
   full.model <- lm(dF_on_F ~ as.factor(lick_factor) + as.factor(trial_factor) + 
                 go:as.factor(trial_factor) + correct:as.factor(trial_factor),
               data = roidat[roidat$trial_factor!=-999,])

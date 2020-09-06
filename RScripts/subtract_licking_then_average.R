@@ -1,3 +1,4 @@
+source_file <- "C:/Users/viviani/Desktop/single_experiments_for_testing/2016-11-05_03_CFEB029.csv"
 
 get_lm_pvalue <- function (modelobject) {
   if (class(modelobject) != "lm") stop("Not an object of class 'lm' ")
@@ -23,15 +24,16 @@ collapse.across.time <- function(dat){
   #and sum along an axis...
   df.tone <- dat$dF_on_F[(dat$trial_factor!=(-999) & dat$trial_factor<6)]
   df.tone <- df.tone[1:(5*(length(df.tone) %/% 5))]
-  mean.df.tone <- colSums(matrix(df.tone,5))/5
+  mean.df.tone <- colSums(matrix(df.tone,5),na.rm=T)/5
   
   df.stim <- dat$dF_on_F[(dat$trial_factor>=6 & dat$trial_factor)<16]
   df.stim <- df.stim[1:(10*(length(df.stim) %/% 10))]
-  mean.df.stim <- colSums(matrix(df.stim,10))/10
+  mean.df.stim <- colSums(matrix(df.stim,10),na.rm=T)/10
   
   df.resp <- dat$dF_on_F[dat$trial_factor>15]
-  df.resp <- df.resp[1:(11*(length(df.resp) %/% 11))]/11
-  mean.df.resp <- colSums(matrix(df.resp,11))/11
+  df.resp <- df.resp[1:(10*(length(df.resp) %/% 10))]/10
+  mean.df.resp <- colSums(matrix(df.resp,10),na.rm=T)/10
+  
   result_idx = seq(1,3*length(mean.df.tone),3)
   result$mean.dF[result_idx+0]       <- mean.df.tone
   result$trial.segment[result_idx+0] <- "Tone"
@@ -51,9 +53,10 @@ collapse.across.time <- function(dat){
 }
 
 
-#Let's start out by getting a single ROI from a single recording.
 
-dat <- read.csv("C:/Users/viviani/Desktop/test.csv")
+
+dat <- read.csv(source_file)
+dat <- dat[!is.na(dat$dF_on_F),]
 rois <- unique(dat$ROI_ID)
 
 licking_model_pvalues = numeric(length(rois))

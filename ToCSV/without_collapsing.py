@@ -188,3 +188,4 @@ if __name__=="__main__":
                                       "left_only_high_contrast")
     construct_csv_for_recording_class("C:/Users/viviani/Desktop/both_sides_high_contrast.csv",
                                       "both_sides_high_contrast")
+    
