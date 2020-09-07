@@ -9,9 +9,9 @@ from accdatatools.Timing.synchronisation import get_lick_state_by_frame
 class KernelExampleFigure:
     seaborn.set_style("dark")
     lick_kernel_fn = lambda x:100*x**2*(1-x)**7
-    lick_kernel_series = lick_kernel_fn(np.linspace(0,1,31))
+    lick_kernel_series = lick_kernel_fn(np.linspace(0,1,33))
     reward_kernel_fn = lambda x:-200*x**4*(1-x)**5
-    reward_kernel_series = reward_kernel_fn(np.linspace(0,1,31))
+    reward_kernel_series = reward_kernel_fn(np.linspace(0,1,33))
     licks = (1,5.7,8,8.2,8.4)
     rewards = (3,5,6)
     def __init__(self):
@@ -26,10 +26,10 @@ class KernelExampleFigure:
             ax.set_xlim((0,12))
         lick_kernel.set_title("(A) Licking kernel")
         lick_kernel.set_xlabel("∆t around a lick")
-        lick_kernel.plot(np.linspace(-0.2,2,31),self.lick_kernel_series,
+        lick_kernel.plot(np.linspace(-0.2,2,33),self.lick_kernel_series,
                          color = 'blue')
         reward_kernel.set_title("(B) Reward kernel")
-        reward_kernel.plot(np.linspace(-0.2,2,31),self.reward_kernel_series,
+        reward_kernel.plot(np.linspace(-0.2,2,33),self.reward_kernel_series,
                            color = 'orange')
         reward_kernel.set_xlabel("∆t around a reward")
         event_train.set_title("(C) Event Occurances")
@@ -42,13 +42,13 @@ class KernelExampleFigure:
         prediction.set_ylabel("∆f/f")
         prediction.plot(*self.predict(),color='k')
         for lick in self.licks:
-            prediction.plot(np.linspace(lick-0.2,lick+2,31),
+            prediction.plot(np.linspace(lick-0.2,lick+2,33),
                             self.lick_kernel_series,
                             color = 'blue',
                             linestyle = '-',
                             alpha = 0.5)
         for reward in self.rewards:
-            prediction.plot(np.linspace(reward-0.2,reward+2,31),
+            prediction.plot(np.linspace(reward-0.2,reward+2,33),
                             self.reward_kernel_series,
                             color = 'orange',
                             linestyle = '-',
@@ -65,6 +65,7 @@ class KernelExampleFigure:
             start = np.searchsorted(time,reward-0.2)+1
             prediction[start:start+len(
                 self.reward_kernel_series)]+=self.reward_kernel_series
+        prediction = np.concatenate((prediction[1:],np.zeros(1)))
         return (time,prediction)
 
     def show(self):
@@ -78,18 +79,23 @@ class LinearApproximationFigure(KernelExampleFigure):
     def lin_approx_predict(self):
         time = np.linspace(0,12,180)
         lick_vector = get_lick_state_by_frame(frame_times = time,lick_times = self.licks)
+        print(lick_vector.reshape(-1,10))
         reward_vector = get_lick_state_by_frame(frame_times = time,lick_times = self.rewards)
-        reward_prediction = lick_prediction = np.zeros(time.shape)
+        reward_prediction = np.zeros(time.shape)
+        lick_prediction = np.zeros(time.shape)
         
-        lick_kernels = (lick_transform(lick_vector,15)+15).astype(int)
-        
+        lick_kernels = lick_transform(lick_vector,15).astype(int)
+        lick_kernels = lick_kernels + 15 - 6
+        lick_kernels[lick_kernels < 0] = -1
         lick_prediction = np.array([self.lick_kernel_series[i] if i>-1 else 0 for i in lick_kernels])
 
-        reward_kernels = (lick_transform(reward_vector,15)+15).astype(int)
+        reward_kernels = lick_transform(reward_vector,15).astype(int)
+        reward_kernels = reward_kernels + 15 - 6
+        reward_kernels[reward_kernels < 0] = -1
         reward_prediction = np.array([self.reward_kernel_series[i] if i>-1 else 0 for i in reward_kernels])
         
         prediction = lick_prediction + reward_prediction
-        prediction = np.concatenate((np.zeros(14),prediction[:-14]))
+        prediction = np.concatenate((np.zeros(7),prediction[:-7]))
         return (time,prediction)
     
     def __init__(self):
@@ -105,10 +111,10 @@ class LinearApproximationFigure(KernelExampleFigure):
             ax.set_xlim((0,12))
         lick_kernel.set_title("(A) Licking kernel")
         lick_kernel.set_xlabel("∆t around a lick")
-        lick_kernel.plot(np.linspace(-0.2,2,31),self.lick_kernel_series,
+        lick_kernel.plot(np.linspace(-0.2,2,33),self.lick_kernel_series,
                          color = 'blue')
         reward_kernel.set_title("(B) Reward kernel")
-        reward_kernel.plot(np.linspace(-0.2,2,31),self.reward_kernel_series,
+        reward_kernel.plot(np.linspace(-0.2,2,33),self.reward_kernel_series,
                            color = 'orange')
         reward_kernel.set_xlabel("∆t around a reward")
         event_train.set_title("(C) Event Occurances")
@@ -119,23 +125,23 @@ class LinearApproximationFigure(KernelExampleFigure):
         prediction.set_title("(D) Kernel Approach")
         prediction.set_xlabel("time")
         prediction.set_ylabel("∆f/f")
-        prediction.plot(*self.predict(),color='k')
+        prediction.plot(*self.predict(),color='k', linestyle = "--")
         ylim = prediction.get_ylim()
         approximation.set_title("(E) Kernel-like Linear Regression")
         approximation.set_xlabel("time")
         approximation.set_ylabel("∆f/f")
-        approximation.plot(*self.lin_approx_predict(),color='k')
+        approximation.plot(*self.lin_approx_predict(),color='k',linestyle = "--")
         approximation.set_ylim(ylim)
         for lick in self.licks:
             for axis in (prediction, approximation):
-                axis.plot(np.linspace(lick-0.2,lick+2,31),
+                axis.plot(np.linspace(lick-0.2,lick+2,33),
                                 self.lick_kernel_series,
                                 color = 'blue',
                                 linestyle = '-',
                                 alpha = 0.5)
         for reward in self.rewards:
             for axis in (prediction, approximation):
-                axis.plot(np.linspace(reward-0.2,reward+2,31),
+                axis.plot(np.linspace(reward-0.2,reward+2,33),
                                 self.reward_kernel_series,
                                 color = 'orange',
                                 linestyle = '-',
