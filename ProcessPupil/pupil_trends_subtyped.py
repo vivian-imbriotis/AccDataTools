@@ -69,20 +69,18 @@ def plot_trial_subset_with_range(axis,correct,go,df, normalize = False,
                                                    columns = "trial_factor", 
                                                    values = "pupil_diameter"
                                                    ).to_numpy()
+    print(pupils_per_timepoint.shape)
     pupils_per_timepoint[pupils_per_timepoint=="NA"] = np.nan
     pupils_per_timepoint = pupils_per_timepoint.astype(float)
     if normalize:
         means = np.nanmean(pupils_per_timepoint[:,:5], axis = -1)
         #divide each row by it's own mean!
         pupils_per_timepoint = pupils_per_timepoint / means[:,None]
-    global a
-    a = pupils_per_timepoint
-    print(pupils_per_timepoint)
     mean = np.nanmean(pupils_per_timepoint[:,:25],axis=0)
     rang = np.nanstd(pupils_per_timepoint[:,:25],axis=0)
     if range_type=="error":
         #Convert to standard error!
-        n_points = np.sum(np.isnan(pupils_per_timepoint[:,:25]), axis = 0)
+        n_points = np.sum(~np.isnan(pupils_per_timepoint[:,:25]), axis = 0)
         rang /= (n_points**0.5)
     axis.plot(x/5,mean,color='black',
               label = 'Mean across trials')
@@ -294,7 +292,7 @@ def create_heatmap_figure(df):
 if __name__=="__main__":
     plt.close('all')
     with np.errstate(all='raise'):
-        df = pd.read_csv("C:/Users/viviani/Desktop/single_experiments_for_testing/2016-11-05_03_CFEB029.csv")
-        create_range_figure(df[:10000],normalize=True,range_type="deviation")
+        df = pd.read_csv("C:/Users/viviani/Desktop/full_datasets_for_analysis/left_only_high_contrast.csv")
+        create_range_figure(df,normalize=False,range_type="error")
     
 
