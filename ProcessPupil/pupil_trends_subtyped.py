@@ -36,7 +36,7 @@ def plot_trial_subset(axis,correct,go,df,cmap, normalize = False, render = True)
     print(f"Shape of plottable array is {pupils_per_timepoint.shape}")
     if normalize:
         #means of first second
-        means = np.nanmean(pupils_per_timepoint[:,:5], axis = -1)
+        means = np.nanmean(pupils_per_timepoint[:,:5], axis = 0)
         #divide each row by it's own mean!
         pupils_per_timepoint = pupils_per_timepoint / means[:,None]
     for idx,trial in zip(trial_ids,pupils_per_timepoint):
@@ -53,7 +53,7 @@ def plot_trial_subset(axis,correct,go,df,cmap, normalize = False, render = True)
     else: axis.set_ylim((0,3))
     return (recordings, pupils_per_timepoint)
 
-
+a = None
 def plot_trial_subset_with_range(axis,correct,go,df, normalize = False, 
                                  range_type = "error", color= "k"):
     if range_type not in ("error","deviation"):
@@ -64,11 +64,6 @@ def plot_trial_subset_with_range(axis,correct,go,df, normalize = False,
     df["roi_num"] = np.fromiter(map(lambda s:s.split(" ")[-1],df.ROI_ID),int)
     trial_ids = df[(df.trial_factor==1)&(df.roi_num==0)].Trial_ID.values
     recordings= pd.Series(map(lambda s:s.split(" ")[0],trial_ids)).unique()
-    if normalize:
-        for recording in recordings:
-            idxs  = list(map(lambda s:recording in s,df.Trial_ID))
-            mean = df[idxs].mean()
-            df.loc[idxs,"pupil_diameter"] /= mean
         
     pupils_per_timepoint = df[df.roi_num==0].pivot(index = "Trial_ID", 
                                                    columns = "trial_factor", 
@@ -76,7 +71,13 @@ def plot_trial_subset_with_range(axis,correct,go,df, normalize = False,
                                                    ).to_numpy()
     pupils_per_timepoint[pupils_per_timepoint=="NA"] = np.nan
     pupils_per_timepoint = pupils_per_timepoint.astype(float)
-
+    if normalize:
+        means = np.nanmean(pupils_per_timepoint[:,:5], axis = -1)
+        #divide each row by it's own mean!
+        pupils_per_timepoint = pupils_per_timepoint / means[:,None]
+    global a
+    a = pupils_per_timepoint
+    print(pupils_per_timepoint)
     mean = np.nanmean(pupils_per_timepoint[:,:25],axis=0)
     rang = np.nanstd(pupils_per_timepoint[:,:25],axis=0)
     if range_type=="error":
@@ -89,7 +90,8 @@ def plot_trial_subset_with_range(axis,correct,go,df, normalize = False,
                   color = color,
                   alpha = 0.3,
                   label = f"Standard {range_type}")
-    axis.set_ylim((10,20))
+    if not normalize: axis.set_ylim((10,30))
+    else: axis.set_ylim((0.8,1.5))
 
 
 def create_figure(df,title=None, render = True, normalize = False):
@@ -290,7 +292,9 @@ def create_heatmap_figure(df):
     fig.show()
 
 if __name__=="__main__":
-    df = pd.read_csv("C:/users/viviani/desktop/unrolled_dataset.csv")
-    create_range_figure(df,normalize=True,range_type="deviation")
+    plt.close('all')
+    with np.errstate(all='raise'):
+        df = pd.read_csv("C:/Users/viviani/Desktop/single_experiments_for_testing/2016-11-05_03_CFEB029.csv")
+        create_range_figure(df[:10000],normalize=True,range_type="deviation")
     
 
