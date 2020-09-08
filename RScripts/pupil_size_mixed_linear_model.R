@@ -4,9 +4,9 @@ seed <- 123456789
 library(merTools)
 library(lmerTest)
 require(emmeans)
-dat <- read.csv("C:/Users/viviani/Desktop/pupil_unrolled.csv")
-# dat$go <- dat$trial_type=="hit" | dat$trial_type == "miss"
-# dat$correct <- dat$trial_type=="hit" | dat$trial_type=="cr"
+dat <- read.csv("C:/Users/viviani/Desktop/full_datasets_for_analysis/pupil_analysis_data.csv")
+dat$licked <- dat$trial_type=="hit" | dat$trial_type == "fa"
+dat$correct <- dat$trial_type=="hit" | dat$trial_type=="cr"
 
 
 base_model       <- lmer(pupil_diameter ~ trial_frame + (1|recording), 
@@ -15,7 +15,7 @@ base_model       <- lmer(pupil_diameter ~ trial_frame + (1|recording),
 #                             data = dat, REML = FALSE)
 # base_model_factor <- lmer(pupil_diameter ~ as.factor(trial_frame)+(1|recording),
 #                           data=dat,REML=FALSE)
-trial_type_model    <- lmer(pupil_diameter ~ trial_frame*trial_type + (1|recording),
+trial_type_model    <- lmer(pupil_diameter ~ trial_frame*licked*correct + (1|recording),
                          data=dat, REML=FALSE)
 # go_correct_model <- lmer(pupil_diameter ~ go*correct*trial_type + (1|recording), 
 #                          data=dat, REML=FALSE)
@@ -84,10 +84,12 @@ save_predictions_to_csv <- function(model,path){
 #                         )
 base_model       <- lmer(pupil_diameter ~ trial_frame + (1|recording), 
                          data=dat, REML=FALSE)
-trial_type_model    <- lmer(pupil_diameter ~ trial_frame*trial_type + (1|recording),
+trial_type_model    <- lmer(pupil_diameter ~ trial_frame*licked*correct + (1|recording),
                             data=dat, REML=FALSE)
 print(anova(base_model,trial_type_model))
-var <- emmeans::emtrends(trial_type_model, pairwise ~ trial_type, var = "trial_frame")
+print(anova(trial_type_model))
+print(summary(trial_type_model))
+var <- emmeans::emtrends(trial_type_model, pairwise ~ licked*correct, var = "trial_frame")
 posthoc <- summary(var)$contrasts
 cat("\n\n")
 print(posthoc)

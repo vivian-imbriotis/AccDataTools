@@ -58,17 +58,24 @@ def plot_trial_subset_with_range(axis,correct,go,df, normalize = False,
                                  range_type = "error", color= "k"):
     if range_type not in ("error","deviation"):
         raise ValueError("range_type must be one of 'error' or 'deviation'")
+    print(f"correct = {correct}; go={go}")
     x = np.arange(0,25)
     df = df[df.go==go]
     df = df[df.correct==correct]
     df["roi_num"] = np.fromiter(map(lambda s:s.split(" ")[-1],df.ROI_ID),int)
     trial_ids = df[(df.trial_factor==1)&(df.roi_num==0)].Trial_ID.values
     recordings= pd.Series(map(lambda s:s.split(" ")[0],trial_ids)).unique()
-        
-    pupils_per_timepoint = df[df.roi_num==0].pivot(index = "Trial_ID", 
+    pupils_per_timepoint = df[df.roi_num==0][~pd.isnull(df.Trial_ID)].pivot(index = "Trial_ID", 
                                                    columns = "trial_factor", 
                                                    values = "pupil_diameter"
                                                    ).to_numpy()
+    global a;
+    a = df[df.roi_num==0][~(df.peritrial_factor<0)]
+    pupils_per_peritrial = df[df.roi_num==0][~(df.peritrial_factor<0)].pivot(index = "number_of_trials_seen", 
+                                                   columns = "peritrial_factor", 
+                                                   values = "pupil_diameter"
+                                                   )
+    a = pupils_per_peritrial
     print(pupils_per_timepoint.shape)
     pupils_per_timepoint[pupils_per_timepoint=="NA"] = np.nan
     pupils_per_timepoint = pupils_per_timepoint.astype(float)
@@ -88,15 +95,16 @@ def plot_trial_subset_with_range(axis,correct,go,df, normalize = False,
                   color = color,
                   alpha = 0.3,
                   label = f"Standard {range_type}")
-    if not normalize: axis.set_ylim((10,30))
-    else: axis.set_ylim((0.8,1.5))
+    if not normalize: axis.set_ylim((10,30)); axis.set_ylabel("Pupil diameter (pixels)")
+    else: axis.set_ylim((0.85,1.2)); axis.set_ylabel("Pupil diameter (normalized)")
+    axis.set_xlabel("Time since trial onset (s)")
 
 
 def create_figure(df,title=None, render = True, normalize = False):
     print(f"Initial shape of dataframe in create_figure call is {df.shape}")
     seaborn.set_style("dark")
     #Clean up dataframe
-    df = df[~pd.isnull(df.Trial_ID)]
+    df = df[~np.all(pd.isnull(df.Trial_ID),df.peritrial_factor<0)]
     #Get an iterator over each peritrial period
     fig,ax = plt.subplots(ncols = 2, nrows = 2, constrained_layout = True,
                           figsize = (12,8))
@@ -293,6 +301,6 @@ if __name__=="__main__":
     plt.close('all')
     with np.errstate(all='raise'):
         df = pd.read_csv("C:/Users/viviani/Desktop/full_datasets_for_analysis/left_only_high_contrast.csv")
-        create_range_figure(df,normalize=False,range_type="error")
+        create_range_figure(df,normalize=True,range_type="error")
     
 

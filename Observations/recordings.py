@@ -45,9 +45,13 @@ class Recording:
             self.stat = np.load("stat.npy", allow_pickle = True)
             self.ops  = np.load("ops.npy", allow_pickle = True).item()
             self.F    = np.load("F.npy")
+            #drop ROIs that are everywhere zero (why do these exist?)
+            valid_idxs = np.count_nonzero(self.F,axis=-1)!=0
+            self.F = self.F[valid_idxs]
             # #Sometimes small values are negative which messes with division by F0
             # self.F    = np.abs(self.F)
             self.Fneu = np.load("Fneu.npy")
+            self.Fneu = self.Fneu[valid_idxs]
             # #same here
             # self.Fneu = np.abs(self.Fneu)
     
@@ -58,7 +62,9 @@ class Recording:
             
             #Get the deconvoluted spiking data and then binarise it
             self.spks = (np.load('spks.npy') > 0)
+            self.spks = self.spks[valid_idxs]
             self.iscell = np.load("iscell.npy")[:,0].astype(np.bool)
+            self.iscell = self.iscell[valid_idxs]
             
             #Merge together highly correlated ROIs
             self.dF_on_F, self.spks,self.iscell = merge_rois(self.dF_on_F,
@@ -141,4 +147,4 @@ class Recording:
 
 if __name__=="__main__":
     from accdatatools.Utils.path import get_exp_path
-    rec = Recording((r"D:\Local_Repository\CFEB026\2016-09-23_02_CFEB026"))
+    rec = Recording((r"H:\Local_Repository\CFEB026\2016-09-23_02_CFEB026"))

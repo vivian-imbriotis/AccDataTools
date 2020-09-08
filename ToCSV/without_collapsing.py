@@ -182,10 +182,20 @@ def construct_csv_for_recording_class(csv_path,cls):
     dataset.to_csv(csv)
     
 if __name__=="__main__":
-    construct_csv_for_recording_class("C:/Users/viviani/Desktop/low_contrast.csv",
+    construct_csv_for_recording_class("C:/Users/viviani/Desktop/full_datasets_for_analysis/low_contrast.csv",
                                       "low_contrast")
-    construct_csv_for_recording_class("C:/Users/viviani/Desktop/left_only_high_contrast.csv",
+    construct_csv_for_recording_class("C:/Users/viviani/Desktop/full_datasets_for_analysis/left_only_high_contrast.csv",
                                       "left_only_high_contrast")
-    construct_csv_for_recording_class("C:/Users/viviani/Desktop/both_sides_high_contrast.csv",
+    construct_csv_for_recording_class("C:/Users/viviani/Desktop/full_datasets_for_analysis/both_sides_high_contrast.csv",
                                       "both_sides_high_contrast")
-    
+    #grab some misc recordings for testing too:
+    import pickle as pkl
+    with open("../DataCleaning/low_contrast.pkl", 'rb') as file:
+        cleaned_list = pkl.load(file)
+    with open("../DataCleaning/low_contrast_uncleaned.pkl", 'rb') as file:
+        uncleaned_list = pkl.load(file)
+    misc_recordings = [r for r in uncleaned_list if not r in cleaned_list]
+    for r_path in misc_recordings:
+        get_dataframe_from_path(r_path).to_csv(os.path.join(
+            "C:/Users/viviani/Desktop/single_experiments_for_testing",
+            get_exp_id(r_path)))
