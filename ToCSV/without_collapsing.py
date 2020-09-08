@@ -198,4 +198,4 @@ if __name__=="__main__":
     for r_path in misc_recordings:
         get_dataframe_from_path(r_path).to_csv(os.path.join(
             "C:/Users/viviani/Desktop/single_experiments_for_testing",
-            get_exp_id(r_path)))
+            f'{get_exp_id(r_path)}.csv'))

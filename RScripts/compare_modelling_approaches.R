@@ -14,6 +14,7 @@ get_lm_pvalue <- function (modelobject) {
 }
 
 collapse.across.time <- function(dat){
+  
   num_trials <- sum(dat$trial_factor==1)
   trials.correct <- dat$correct[dat$trial_factor==1]
   trials.go <- dat$go[dat$trial_factor==1]
@@ -27,26 +28,30 @@ collapse.across.time <- function(dat){
   #portion of each trial we care about, then we need to sum 
   #together every K consecutive timepoints. In numpy i'd reshape
   #and sum along an axis...
-  df.tone <- dat$dF_on_F[(dat$trial_factor!=(-999) & dat$trial_factor<6)]
-  df.tone <- df.tone[1:(5*(length(df.tone) %/% 5))]
-  mean.df.tone <- colSums(matrix(df.tone,5),na.rm=T)/5
+  df.tone <- dat$dF_on_F[dat$trial_component == 'Tone']
+  df.tone <- df.tone[1:num_trials*5]
+  df.tone.matr <- matrix(df.tone,nrow=num_trials,ncol=5,byrow=TRUE)
+  mean.df.tone <- rowSums(df.tone.matr,na.rm=T)/5
   
-  df.stim <- dat$dF_on_F[(dat$trial_factor>=6 & dat$trial_factor)<16]
-  df.stim <- df.stim[1:(10*(length(df.stim) %/% 10))]
-  mean.df.stim <- colSums(matrix(df.stim,10),na.rm=T)/10
+  df.stim <- dat$dF_on_F[dat$trial_component=='Stim']
+  df.stim <- df.stim[1:num_trials*10]
+  df.stim.matr = matrix(df.stim,nrow=num_trials,ncol=10,byrow=TRUE)
+  mean.df.stim <- rowSums(df.stim.matr,na.rm=T)/10
   
-  df.resp <- dat$dF_on_F[dat$trial_factor>15]
-  df.resp <- df.resp[1:(10*(length(df.resp) %/% 10))]/10
-  mean.df.resp <- colSums(matrix(df.resp,10),na.rm=T)/10
+  df.resp <- dat$dF_on_F[dat$trial_component=='Resp']
+  df.resp <- df.resp[1:num_trials*10]
+  df.resp.matr <- matrix(df.resp,nrow=num_trials,ncol=10,byrow=TRUE)
+  mean.df.resp <- rowSums(df.resp.matr,na.rm=T)/10
   
-  result_idx = seq(1,3*length(mean.df.tone),3)
+  result_idx = seq(1,3*num_trials,3)
+
   result$mean.dF[result_idx+0]       <- mean.df.tone
   result$trial.segment[result_idx+0] <- "Tone"
   result$mean.dF[result_idx+1]       <- mean.df.stim
   result$trial.segment[result_idx+1] <- "Stimulus"
   result$mean.dF[result_idx+2]       <- mean.df.resp
   result$trial.segment[result_idx+2] <- "Response"
-  
+
   result$correct <- rep(trials.correct,3)
   result$go      <- rep(trials.go,3)
   result$side    <- rep(trials.side,3)
@@ -109,7 +114,7 @@ for (i in 1:n){
   full.model.stats[i] <- full.model.test$statistic
   full.model.rsqds[i] <- summary(full.model)$adj.r.squared
   
-  full.model.residuals <- full.model$fitted.values - roidat$dF_on_F
+  full.model.residuals <- full.model$fitted.values - roidat[roidat$trial_factor!=-999,]$dF_on_F
   full.model.shapiro.stat[i] <- shapiro.test(sample(full.model.residuals,
                                                      min(3000,length(full.model.residuals))))$statistic
   
