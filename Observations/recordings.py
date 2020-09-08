@@ -12,9 +12,6 @@ import seaborn
 import numpy as np
 import matplotlib.pyplot as plt
 
-from scipy.ndimage.filters import minimum_filter1d, uniform_filter1d
-from scipy.stats import siegelslopes
-
 from accdatatools.Utils.path import get_timeline_path, get_exp_id
 from accdatatools.Timing.synchronisation import get_lick_times
 from accdatatools.ProcessFluorescence.data_cleaning import merge_rois

@@ -43,13 +43,11 @@ class ExperimentFigure:
 
         #Sort by rastermap embedding
         print("Sorting traces by rastermap ordering")
-        if merge:
-            r.fit(self.recording.dF_on_F_merged)
-            self.dF_on_F = self.recording.dF_on_F_merged[r.isort]
-        else:
-            r.fit(self.recording.dF_on_F)
-            self.dF_on_F = self.recording.dF_on_F[r.isort]
-        
+        self.dF_on_F = self.recording.dF_on_F
+        self.dF_on_F[np.isnan(self.dF_on_F)] = 1
+        r.fit(self.dF_on_F)
+        self.dF_on_F = self.dF_on_F[r.isort]
+
         #Show overall plot
         timeline_path  = os.path.join(exp_path,
                                   item(
