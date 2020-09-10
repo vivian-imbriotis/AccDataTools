@@ -57,7 +57,11 @@ class Recording:
             self.F0 = df.get_smoothed_running_minimum(self.Fcorr)
             self.dF_on_F = df.get_df_on_f0(self.Fcorr,self.F0)
             
+            #Get the logged form
+            self.logged_dF = df.log_transform(self.dF_on_F)
+            
             #Get the deconvoluted spiking data and then binarise it
+            self.spks_unbinarized = np.load('spks.npy')
             self.spks = (np.load('spks.npy') > 0)
             self.spks = self.spks[valid_idxs]
             self.iscell = np.load("iscell.npy")[:,0].astype(np.bool)

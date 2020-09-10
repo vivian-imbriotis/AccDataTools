@@ -38,6 +38,9 @@ def get_df_on_f0(F,F0=None):
         F0 = get_smoothed_running_minimum(F)
         return get_df_on_f0(F,F0)
 
+def log_transform(dF_on_F):
+    m = np.min(dF_on_F)
+    return np.log(dF_on_F - (m<0)*(m) + 1e-16)
 
 class HubelRegressor:
     default_k = 100

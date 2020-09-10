@@ -103,12 +103,13 @@ class RecordingUnroller(Recording):
     def to_unrolled_records(self):
         results = []
         ROI_IDs = self.trials[0].ROI_identifiers
-        for roi_df, roi_spks, roi_id in zip(self.dF_on_F, self.spks, ROI_IDs):
-            for idx,(df, spk, trialtime, peritrialtime, comp, correct, side, go,
-                     contrast,
-                     lick, pupil, frametime, trial_id, trial_num) in enumerate(zip(
+        for roi_df, roi_spks, roi_id, roi_log in zip(self.dF_on_F, self.spks, ROI_IDs,self.logged_dF):
+            for idx,(df, spk, log, trialtime, peritrialtime, comp, correct, side, go,
+                     contrast, lick, pupil, frametime, trial_id, 
+                     trial_num) in enumerate(zip(
                                                             roi_df,
                                                             roi_spks,
+                                                            roi_log,
                                                             self.trialtime,
                                                             self.peritrialtime,
                                                             self.trial_component,
@@ -134,6 +135,7 @@ class RecordingUnroller(Recording):
                             "peritrial_factor":peritrialtime,
                             "trial_component":comp,
                             "dF_on_F": df,
+                            "logged_dF":log,
                             "spks": spk,
                             "lick_factor": lick,
                             "pupil_diameter": pupil if not np.isnan(pupil) else 'NA',
