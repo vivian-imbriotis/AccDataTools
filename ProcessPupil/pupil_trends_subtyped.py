@@ -104,7 +104,7 @@ def create_figure(df,title=None, render = True, normalize = False):
     print(f"Initial shape of dataframe in create_figure call is {df.shape}")
     seaborn.set_style("dark")
     #Clean up dataframe
-    df = df[~np.all(pd.isnull(df.Trial_ID),df.peritrial_factor<0)]
+    df = df[~pd.isnull(df.Trial_ID)]
     #Get an iterator over each peritrial period
     fig,ax = plt.subplots(ncols = 2, nrows = 2, constrained_layout = True,
                           figsize = (12,8))
@@ -226,6 +226,145 @@ def perform_testing(df, render = False, normalize = False):
         result.append(df)
     df = pd.concat(result)
     return df
+
+a = None
+
+def plot_peritrial_subset(axis,correct,go,df,cmap, normalize = False, render = True):
+    print(f"Initial shape of df in plot_trial_subset call is {df.shape}")
+    x = np.arange(1,27)
+    cond_list = [(df.trial_factor>0),(df.peritrial_factor>0)]
+
+    df['extended_trial_factor'] = np.select(cond_list,(df.trial_factor,df.peritrial_factor))
+    df["roi_num"] = np.fromiter(map(lambda s:s.split(" ")[-1],df.ROI_ID),int)
+    trial_ids = df[(df.trial_factor==1)&(df.roi_num==0)].Trial_ID.values
+    for trial in trial_ids:
+        if not type(trial)==str and not np.isnan(trial):
+            #Right rotate 15 elements
+            trial_idxs = df.Trial_ID==trial
+            peritrial_idxs = pd.concat((trial_idxs[15:], trial_idxs[:15]))
+            df.loc['Trial_ID',peritrial_idxs] = trial
+            df.loc['go',peritrial_idxs] = df.go[df.Trial_ID==trial][0]
+            df.loc['correct',(df.Trial_ID==trial)-15] = df.correct[df.Trial_ID==trial][0]
+
+    df = df[df.go==go]
+    df = df[df.correct==correct]
+    recordings= list(map(lambda s:s.split(" ")[0],trial_ids))
+    trial_ids = map(lambda s:s.split(" ")[-1],trial_ids)
+    trial_ids = map(int,trial_ids)
+    # pupils_per_timepoint = [df[df.trial_factor==i][df.roi_num==0].pupil_diameter.values for i in x]
+    # length = max(map(len, pupils_per_timepoint))
+    # pupils_per_timepoint= [list(ls)+[np.nan]*(length-len(ls)) for ls in pupils_per_timepoint]
+    # pupils_per_timepoint = np.array(pupils_per_timepoint)
+    global a
+    a = df
+    pupils_per_timepoint = df[df.roi_num==0].pivot(index = "Trial_ID", 
+                                                   columns = "extended_trial_factor", 
+                                                   values = "pupil_diameter"
+                                                   ).to_numpy()
+    pupils_per_timepoint[pupils_per_timepoint=="NA"] = np.nan
+    pupils_per_timepoint = pupils_per_timepoint.astype(float)
+    print(f"Shape of plottable array is {pupils_per_timepoint.shape}")
+    if normalize:
+        #means of first second
+        means = np.nanmean(pupils_per_timepoint[:,:5], axis = 0)
+        #divide each row by it's own mean!
+        pupils_per_timepoint = pupils_per_timepoint / means[:,None]
+    for idx,trial in zip(trial_ids,pupils_per_timepoint):
+        if render: axis.plot((x)/5,trial,
+                color = cmap.to_rgba(idx,0.2))
+    axis.plot(x/5,np.nanmean(pupils_per_timepoint,axis=0),color='black',
+              label = 'Mean across trials')
+    axis.set_xlim((1,5))
+    axis.set_xlabel("time (s)")
+    axis.set_ylabel(
+        "size of pupil / initial size of pupil" if normalize else "pupil diameter (pixels)"
+        )
+    if not normalize: axis.set_ylim((0,30))
+    else: axis.set_ylim((0,3))
+    return (recordings, pupils_per_timepoint)
+
+
+def create_peritrial_figure(df,title=None, render = True, normalize = False):
+    print(f"Initial shape of dataframe in create_figure call is {df.shape}")
+    seaborn.set_style("dark")
+    #Clean up dataframe
+    df = df[~(pd.isnull(df.Trial_ID) & df.peritrial_factor<0)]
+    #Get an iterator over each peritrial period
+    fig,ax = plt.subplots(ncols = 2, nrows = 2, constrained_layout = True,
+                          figsize = (12,8))
+    num_trials = 250
+    norm = c.Normalize(vmin=0,vmax = num_trials)
+    cmap = cm.ScalarMappable(norm,'plasma')
+    
+    (hit_axis, miss_axis), (fa_axis, cr_axis) = ax
+    
+    
+    #HIT AXIS
+    hits = plot_peritrial_subset(hit_axis, correct=True, go=True, df=df, cmap=cmap,
+                             normalize = normalize, render = render)
+    hit_axis.set_title("Hit Trials")
+    hit_axis.legend()
+    
+    #MISS AXIS
+    misses = plot_peritrial_subset(miss_axis, correct=False, go=True, df=df, cmap=cmap,
+                               normalize = normalize, render = render)
+    miss_axis.set_title("Miss Trials")
+    
+    #FALSE ALARM AXIS
+    fas = plot_peritrial_subset(fa_axis, correct=False, go=False ,df=df, cmap=cmap,
+                            normalize = normalize, render = render)
+    fa_axis.set_title("False-Alarm Trials")
+    
+    #CORRECT REJECTION AXIS
+    crs = plot_peritrial_subset(cr_axis, correct=True, go=False, df=df, cmap=cmap,
+                            normalize = normalize, render = render)
+    cr_axis.set_title("Correct-Rejection Trials")
+    
+    #Turn off inner axis ticks and labels
+    hit_axis.set_xticks([])
+    hit_axis.set_xlabel("")
+    miss_axis.set_xticks([])    
+    miss_axis.set_xlabel("")
+    miss_axis.set_yticks([])
+    miss_axis.set_ylabel("")
+    cr_axis.set_yticks([])
+    cr_axis.set_ylabel("")
+    
+    #ADD A COLORBAR
+    cmap._A = []
+    cb = fig.colorbar(cmap,ax = ax, location="bottom", shrink = 0.4)
+    cb.set_label("Trial Number")
+    if title:
+        fig.suptitle(title)
+    if render: fig.show()
+    return (hits,misses,fas,crs)
+
+
+def perform_peritrial_testing(df, render = False, normalize = False):
+    hits,misses,fas,crs = create_peritrial_figure(df,render=render, normalize = normalize)
+    hits_df   = pd.DataFrame(data = hits[1])
+    hits_df["recording"] = hits[0]
+    # hits["trial_no"] = hits.index
+    # hits = hits.melt(id_vars = "trial_no")
+    # hits.columns = ['trial_no','trial_frame','pupil_diameter']
+    # hits["trial_type"] = "hit"
+    # return hits
+    misses_df = pd.DataFrame(data=misses[1])
+    misses_df["recording"] = misses[0]
+    fas_df    = pd.DataFrame(data = fas[1])
+    fas_df["recording"] = fas[0]
+    crs_df    = pd.DataFrame(data=crs[1])
+    crs_df["recording"] = crs[0]
+    result = []
+    for df,trial_type in zip((hits_df,misses_df,fas_df,crs_df),
+                             ("hit","miss","fa","cr")):
+        df["trial_no"] = df.index
+        df = df.melt(id_vars = ["trial_no","recording"])
+        df.columns = ['trial_no','recording','trial_frame','pupil_diameter']
+        df["trial_type"] = trial_type
+        result.append(df)
+    df = pd.concat(result)
+    return df
     
 
 def create_heatmap_figure(df):
@@ -299,8 +438,10 @@ def create_heatmap_figure(df):
 
 if __name__=="__main__":
     plt.close('all')
-    with np.errstate(all='raise'):
-        df = pd.read_csv("C:/Users/viviani/Desktop/full_datasets_for_analysis/left_only_high_contrast.csv")
-        create_range_figure(df,normalize=True,range_type="error")
+    # with np.errstate(all='raise'):
+    #     df = pd.read_csv("C:/Users/viviani/Desktop/full_datasets_for_analysis/left_only_high_contrast.csv")
+    #     create_range_figure(df,normalize=True,range_type="error")
+    df = pd.read_csv("C:/Users/viviani/Desktop/single_experiments_for_testing/2016-11-01_03_CFEB027.csv")
+    perform_peritrial_testing(df,render=True)
     
 

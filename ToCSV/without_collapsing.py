@@ -25,7 +25,8 @@ from accdatatools.Timing.synchronisation import (get_neural_frame_times,
 
 
 class RecordingUnroller(Recording):
-    def __init__(self,exp_path,ignore_dprime=False, tolerate_lack_of_eye_video = False):
+    def __init__(self,exp_path,ignore_dprime=False, tolerate_lack_of_eye_video = False,
+                 ignore_eye_video=False):
         self.exp_path = exp_path
         super().__init__(exp_path)
         self.trials = get_trials_in_recording(exp_path, 
@@ -55,12 +56,13 @@ class RecordingUnroller(Recording):
             if exp_id in file and '.h5' in file:
                 hdf_path = os.path.join(DLC_ANALYSED_VIDEOS_DIRECTORY,
                                         file)
-                self.pupil_diameter = get_eye_diameter_at_timepoints(hdf_path, 
-                                                             timeline_path, 
-                                                             self.frame_times)
-                break
+                if not ignore_eye_video:
+                    self.pupil_diameter = get_eye_diameter_at_timepoints(hdf_path, 
+                                                                 timeline_path, 
+                                                                 self.frame_times)
+                    break
         else:
-            if not tolerate_lack_of_eye_video:
+            if not ignore_eye_video and not tolerate_lack_of_eye_video:
                 raise ValueError(f"No associated eyecam footage found at {DLC_ANALYSED_VIDEOS_DIRECTORY}")
             self.pupil_diameter = [np.nan]*self.ops["nframes"]
 
