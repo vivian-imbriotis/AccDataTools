@@ -133,3 +133,7 @@ dmypy.json
 
 # pytype static type analyzer
 .pytype/
+
+#CUSTOM ADDITION: ignore all .csv datasets, they can be generated from code
+#and are too big to reasonably have in commit history
+*.csv

@@ -1,4 +1,4 @@
-source_file <- "C:/Users/viviani/Desktop/single_experiments_for_testing/2016-11-05_03_CFEB029.csv"
+source_file <- "C:/Users/viviani/Desktop/full_datasets_for_analysis/left_only_high_contrast.csv"
 
 get_lm_pvalue <- function (modelobject) {
   if (class(modelobject) != "lm") stop("Not an object of class 'lm' ")
@@ -9,6 +9,7 @@ get_lm_pvalue <- function (modelobject) {
 }
 
 collapse.across.time <- function(dat){
+  
   num_trials <- sum(dat$trial_factor==1)
   trials.correct <- dat$correct[dat$trial_factor==1]
   trials.go <- dat$go[dat$trial_factor==1]
@@ -22,19 +23,23 @@ collapse.across.time <- function(dat){
   #portion of each trial we care about, then we need to sum 
   #together every K consecutive timepoints. In numpy i'd reshape
   #and sum along an axis...
-  df.tone <- dat$dF_on_F[(dat$trial_factor!=(-999) & dat$trial_factor<6)]
-  df.tone <- df.tone[1:(5*(length(df.tone) %/% 5))]
-  mean.df.tone <- colSums(matrix(df.tone,5),na.rm=T)/5
+  df.tone <- dat$dF_on_F[dat$trial_component == 'Tone']
+  df.tone <- df.tone[1:num_trials*5]
+  df.tone.matr <- matrix(df.tone,nrow=num_trials,ncol=5,byrow=TRUE)
+  mean.df.tone <- rowSums(df.tone.matr,na.rm=T)/5
   
-  df.stim <- dat$dF_on_F[(dat$trial_factor>=6 & dat$trial_factor)<16]
-  df.stim <- df.stim[1:(10*(length(df.stim) %/% 10))]
-  mean.df.stim <- colSums(matrix(df.stim,10),na.rm=T)/10
+  df.stim <- dat$dF_on_F[dat$trial_component=='Stim']
+  df.stim <- df.stim[1:num_trials*10]
+  df.stim.matr = matrix(df.stim,nrow=num_trials,ncol=10,byrow=TRUE)
+  mean.df.stim <- rowSums(df.stim.matr,na.rm=T)/10
   
-  df.resp <- dat$dF_on_F[dat$trial_factor>15]
-  df.resp <- df.resp[1:(10*(length(df.resp) %/% 10))]/10
-  mean.df.resp <- colSums(matrix(df.resp,10),na.rm=T)/10
+  df.resp <- dat$dF_on_F[dat$trial_component=='Resp']
+  df.resp <- df.resp[1:num_trials*10]
+  df.resp.matr <- matrix(df.resp,nrow=num_trials,ncol=10,byrow=TRUE)
+  mean.df.resp <- rowSums(df.resp.matr,na.rm=T)/10
   
-  result_idx = seq(1,3*length(mean.df.tone),3)
+  result_idx = seq(1,3*num_trials,3)
+  
   result$mean.dF[result_idx+0]       <- mean.df.tone
   result$trial.segment[result_idx+0] <- "Tone"
   result$mean.dF[result_idx+1]       <- mean.df.stim
@@ -51,8 +56,6 @@ collapse.across.time <- function(dat){
   result$trial.segment <- as.factor(result$trial.segment)
   return(result)
 }
-
-
 
 
 dat <- read.csv(source_file)
@@ -82,7 +85,7 @@ for(i in 1:length(rois)){
   residual.dat$dF_on_F <- subset$dF_on_F - licking.prediction
   collapsed.after.licking.subtraction <- collapse.across.time(residual.dat)
   lm.with.licking.subtraction<- lm(mean.dF ~ trial.segment + trial.segment:correct
-                                    +trial.segment:go + trial.segment:go:correct,
+                                    +trial.segment:go,
                                     data = collapsed.after.licking.subtraction)
   
   summary_objects[[i]] <- summary(lm.with.licking.subtraction)
@@ -96,5 +99,12 @@ coeffs          <- lapply(summary_objects, function(x) x$coefficients)
 coeff_estimates <- data.frame(do.call(rbind, lapply(coeffs,function(x) x[,"Estimate"])))
 coeff_pvals     <- data.frame(do.call(rbind, lapply(coeffs,function(x) x[,"Pr(>|t|)"])))
 
-anova_frame <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`Pr(>F)`))))
-colnames(anova_frame) <- row.names(anovas[[1]])
+anova_frame_pvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`Pr(>F)`))))
+anova_frame_fvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`F value`))))
+colnames(anova_frame_pvals) <- colnames(anova_frame_pvals) <- sapply(row.names(anovas[[1]]),FUN=function(x) paste(x,"pvalue",sep="."))
+colnames(anova_frame_fvals) <- colnames(anova_frame_fvals) <- sapply(row.names(anovas[[1]]),FUN=function(x) paste(x,"fvalue",sep="."))
+#Drop the residuals columns from the ANOVA output matrix
+anova_frame_pvals <- anova_frame_pvals[,1:3]
+anova_frame_fvals <- anova_frame_fvals[,1:3]
+anova_frame <- cbind(anova_frame_pvals,anova_frame_fvals)
+write.csv(anova_frame,"left_only_collapsed_lm_anova_results.csv")
