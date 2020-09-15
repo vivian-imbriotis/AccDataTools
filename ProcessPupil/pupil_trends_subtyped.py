@@ -233,19 +233,30 @@ def plot_peritrial_subset(axis,correct,go,df,cmap, normalize = False, render = T
     print(f"Initial shape of df in plot_trial_subset call is {df.shape}")
     x = np.arange(1,27)
     cond_list = [(df.trial_factor>0),(df.peritrial_factor>0)]
-
-    df['extended_trial_factor'] = np.select(cond_list,(df.trial_factor,df.peritrial_factor))
+    df['extended_trial_factor'] = np.select(cond_list,(df.trial_factor,-1*df.peritrial_factor),default=np.nan)
     df["roi_num"] = np.fromiter(map(lambda s:s.split(" ")[-1],df.ROI_ID),int)
+    
+    
     trial_ids = df[(df.trial_factor==1)&(df.roi_num==0)].Trial_ID.values
+    
+    #We need to copy information about each trial to the pre-trial datapoints
+    df2 = df.copy(deep=True)
+    first_loop=True
     for trial in trial_ids:
-        if not type(trial)==str and not np.isnan(trial):
-            #Right rotate 15 elements
-            trial_idxs = df.Trial_ID==trial
-            peritrial_idxs = pd.concat((trial_idxs[15:], trial_idxs[:15]))
-            df.loc['Trial_ID',peritrial_idxs] = trial
-            df.loc['go',peritrial_idxs] = df.go[df.Trial_ID==trial][0]
-            df.loc['correct',(df.Trial_ID==trial)-15] = df.correct[df.Trial_ID==trial][0]
-
+        #Left rotate the trial mask 15 elements
+        trial_idxs = (df.Trial_ID==trial)
+        peritrial_idxs = trial_idxs.shift(periods = -15, fill_value=False)
+        if first_loop:
+            print(trial_idxs[30:50])
+            print(peritrial_idxs[30:50])
+            first_loop=False
+        #Propogate trial information to pre-trial timepoints
+        df2.loc[peritrial_idxs,'Trial_ID'] = df.loc[trial_idxs,'Trial_ID']
+        df2.loc[peritrial_idxs,'go']       = df.loc[trial_idxs,'go']
+        df2.loc[peritrial_idxs,'correct']  = df.loc[trial_idxs,'correct']
+        
+    global a
+    a=df2
     df = df[df.go==go]
     df = df[df.correct==correct]
     recordings= list(map(lambda s:s.split(" ")[0],trial_ids))
@@ -255,14 +266,13 @@ def plot_peritrial_subset(axis,correct,go,df,cmap, normalize = False, render = T
     # length = max(map(len, pupils_per_timepoint))
     # pupils_per_timepoint= [list(ls)+[np.nan]*(length-len(ls)) for ls in pupils_per_timepoint]
     # pupils_per_timepoint = np.array(pupils_per_timepoint)
-    global a
-    a = df
     pupils_per_timepoint = df[df.roi_num==0].pivot(index = "Trial_ID", 
                                                    columns = "extended_trial_factor", 
                                                    values = "pupil_diameter"
                                                    ).to_numpy()
     pupils_per_timepoint[pupils_per_timepoint=="NA"] = np.nan
     pupils_per_timepoint = pupils_per_timepoint.astype(float)
+
     print(f"Shape of plottable array is {pupils_per_timepoint.shape}")
     if normalize:
         #means of first second
