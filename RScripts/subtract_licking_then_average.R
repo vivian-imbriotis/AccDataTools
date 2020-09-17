@@ -154,7 +154,7 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   colnames(coeff_pvals_a)   <- sapply(colnames(coeff_pvals_a),FUN=function(x) paste('coefficient',x,"pvalue",sep=" "))
   colnames(coeff_estimates) <- sapply(colnames(coeff_estimates),FUN=function(x) paste('coefficient',x,"estimate",sep=" "))
   
-  anova_frame_pvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`Pr(>F)`))))   #ANOVA p-values for each var
+  anova_frame_pvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) p.adjust(x$`Pr(>F)`,method='fdr')))))   #ANOVA p-values for each var
   anova_frame_fvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`F value`))))  #ANOVA f-values
   #Finally, partial eta-squareds as a measure of effect size on ANOVA:
   anova_frame_etas  <- data.frame(t(rbind(sapply(anovas,FUN=function(x) effectsize::eta_squared(x)$Eta_Sq_partial))))
@@ -169,134 +169,34 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   #Glue everything together and dump to CSV
   output_frame <- cbind(anova_frame_pvals,anova_frame_fvals, anova_frame_etas, coeff_pvals_a,coeff_estimates)
   output_frame$`licking.model pvalue` <- licking_model_pvalues
-  output_frame$`overall.model.adj.rsquared` <- rsquareds
-  write.csv(anova_frame,destination_file)
+  output_frame$`overall.model.adj.rsquared` <- unlist(rsquareds)
+  write.csv(output_frame,destination_file)
   #and return
   output_frame
 }
 
 
-###############################################
-## ANALYSIS OF LEFT_ONLY (MONOCULAR) DATASET ##
-###############################################
-print("Beginning Analysis of Monocular Data...")
+######################################################
+##    ANALYSIS OF LEFT_ONLY (MONOCULAR) DATASET     ##
+######################################################
+print("Beginning analysis of monocular data...")
 left_only_results <- analyse_and_produce_csv_of_results(source_file_left_only,
                                                         "results_left_only.csv")
-# dat <- read.csv(source_file_left_only)
-# dat <- dat[!is.na(dat$dF_on_F),]
-# rois <- unique(dat$ROI_ID)
-# 
-# licking_model_pvalues = numeric(length(rois))
-# licking_significant = 0
-# licking_insignificant = 0
-# summary_objects = vector(mode = "list", length= length(rois))
-# model_pvals = numeric(length(rois))
-# anovas = vector(mode = "list", length = length(rois))
-# 
-# 
-# for(i in 1:length(rois)){
-#   roi <- rois[i]
-#   subset <- dat[dat$ROI_ID==roi,]
-#   outside_trials  <- subset[subset$trial_factor== -999,]
-#   licking.model <- lm(dF_on_F ~ lick_factor, 
-#                       data = outside_trials)
-#   if(get_lm_pvalue(licking.model)>0.05){
-#     licking_insignificant = licking_insignificant + 1
-#     licking_model <- lm(dF_on_F ~ 1, data = outside_trials)
-#   }
-#   licking.prediction <- predict(licking.model, newdata = subset)
-#   subset$residuals <- subset$dF_on_F - licking.prediction
-#   residual.dat <- subset
-#   residual.dat$dF_on_F <- subset$dF_on_F - licking.prediction
-#   collapsed.after.licking.subtraction <- collapse.across.time(residual.dat)
-#   lm.with.licking.subtraction<- lm(mean.dF ~ trial.segment + trial.segment:correct
-#                                     +trial.segment:go,
-#                                     data = collapsed.after.licking.subtraction)
-#   
-#   summary_objects[[i]] <- summary(lm.with.licking.subtraction)
-#   anovas[[i]] <- anova(lm.with.licking.subtraction)
-#   model_pvals[[i]] <- get_lm_pvalue(lm.with.licking.subtraction)
-# }
-# 
-# model_pvals     <- p.adjust(model_pvals, method = "fdr")
-# rsquareds       <- lapply(summary_objects, function(x) x$adj.r.squared)
-# coeffs          <- lapply(summary_objects, function(x) x$coefficients)
-# coeff_estimates <- data.frame(do.call(rbind, lapply(coeffs,function(x) x[,"Estimate"])))
-# coeff_pvals     <- data.frame(do.call(rbind, lapply(coeffs,function(x) x[,"Pr(>|t|)"])))
-# 
-# anova_frame_pvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`Pr(>F)`))))
-# anova_frame_fvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`F value`))))
-# colnames(anova_frame_pvals) <- colnames(anova_frame_pvals) <- sapply(row.names(anovas[[1]]),FUN=function(x) paste(x,"pvalue",sep="."))
-# colnames(anova_frame_fvals) <- colnames(anova_frame_fvals) <- sapply(row.names(anovas[[1]]),FUN=function(x) paste(x,"fvalue",sep="."))
-# #Drop the residuals columns from the ANOVA output matrix
-# anova_frame_pvals <- anova_frame_pvals[,1:3]
-# anova_frame_fvals <- anova_frame_fvals[,1:3]
-# anova_frame <- cbind(anova_frame_pvals,anova_frame_fvals)
-# write.csv(anova_frame,"left_only_collapsed_lm_anova_results.csv")
 
 #######################################################
 ## ANALYSIS OF BINOCULAR, HIGH-CONTRAST STIM DATASET ##
 #######################################################
-print("Beginning analysis of binocular high contrast data")
+print("Beginning analysis of binocular high contrast data...")
 binocular_high_con_results <- analyse_and_produce_csv_of_results(source_file_left_and_right,
                                                                  'results_binocular.csv',
                                                                  side_varying = TRUE)
-# dat <- read.csv(source_file_left_and_right)
-# dat <- dat[!is.na(dat$dF_on_F),]
-# rois <- unique(dat$ROI_ID)
-# 
-# licking_model_pvalues = numeric(length(rois))
-# licking_significant = 0
-# licking_insignificant = 0
-# summary_objects = vector(mode = "list", length= length(rois))
-# model_pvals = numeric(length(rois))
-# anovas = vector(mode = "list", length = length(rois))
-# 
-# for(i in 1:length(rois)){
-#   roi <- rois[i]
-#   subset <- dat[dat$ROI_ID==roi,]
-#   outside_trials  <- subset[subset$trial_factor== -999,]
-#   licking.model <- lm(dF_on_F ~ lick_factor, 
-#                       data = outside_trials)
-#   if(get_lm_pvalue(licking.model)>0.05){
-#     licking_insignificant = licking_insignificant + 1
-#     licking_model <- lm(dF_on_F ~ 1, data = outside_trials)
-#   }
-#   licking.prediction <- predict(licking.model, newdata = subset)
-#   subset$residuals <- subset$dF_on_F - licking.prediction
-#   residual.dat <- subset
-#   residual.dat$dF_on_F <- subset$dF_on_F - licking.prediction
-#   collapsed.after.licking.subtraction <- collapse.across.time(residual.dat)
-#   lm.with.licking.subtraction<- lm(mean.dF ~ trial.segment + trial.segment:correct
-#                                    +trial.segment:go + trial.segment:side,
-#                                    data = collapsed.after.licking.subtraction)
-#   
-#   summary_objects[[i]] <- summary(lm.with.licking.subtraction)
-#   anovas[[i]] <- anova(lm.with.licking.subtraction)
-#   model_pvals[[i]] <- get_lm_pvalue(lm.with.licking.subtraction)
-# }
-# 
-# model_pvals     <- p.adjust(model_pvals, method = "fdr")
-# rsquareds       <- lapply(summary_objects, function(x) x$adj.r.squared)
-# coeffs          <- lapply(summary_objects, function(x) x$coefficients)
-# coeff_estimates <- data.frame(do.call(rbind, lapply(coeffs,function(x) x[,"Estimate"])))
-# coeff_pvals     <- data.frame(do.call(rbind, lapply(coeffs,function(x) x[,"Pr(>|t|)"])))
-# 
-# anova_frame_pvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`Pr(>F)`))))
-# anova_frame_fvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`F value`))))
-# colnames(anova_frame_pvals) <- colnames(anova_frame_pvals) <- sapply(row.names(anovas[[1]]),FUN=function(x) paste(x,"pvalue",sep="."))
-# colnames(anova_frame_fvals) <- colnames(anova_frame_fvals) <- sapply(row.names(anovas[[1]]),FUN=function(x) paste(x,"fvalue",sep="."))
-# #Drop the residuals columns from the ANOVA output matrix
-# anova_frame_pvals <- anova_frame_pvals[,1:4]
-# anova_frame_fvals <- anova_frame_fvals[,1:4]
-# anova_frame <- cbind(anova_frame_pvals,anova_frame_fvals)
-# write.csv(anova_frame,"both_sides_collapsed_lm_anova_results.csv")
 
 #######################################################
 ## ANALYSIS OF BINOCULAR, LOW-CONTRAST STIM DATASET  ##
 #######################################################
-print("Beginning analysis of low-contrast data")
+print("Beginning analysis of low-contrast data...")
 binocular_low_con_results <- analyse_and_produce_csv_of_results(source_file_low_contrast,
                                                                 'results_low_constrast.csv',
                                                                  side_varying = TRUE,
                                                                  contrast_varying = TRUE)
+print("...done")

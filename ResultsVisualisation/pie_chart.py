@@ -10,21 +10,25 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import seaborn as sns
-from adjustText import adjust_text
 sns.set_style("darkgrid")
 
 
 readable_titles = {
-    "trial.segment.fvalue" : "During Trial",
-    "trial.segment:correct.fvalue" : "Correct/Incorrect Response",
-    "trial.segment:go.fvalue" : "Go/No-Go Stimulus",
-    "trial.segment:side.fvalue" : "Left/Right Stimulus",
-    "trial.segment:correct:contrast.fvalue" : "High/Low Contrast",
-    "trial.segment.pvalue" : "During Trial",
-    "trial.segment:correct.pvalue" : "Correct/Incorrect Response",
-    "trial.segment:go.pvalue" : "Go/No-Go Stimulus",
-    "trial.segment:side.pvalue" : "Left/Right Stimulus",
-    "trial.segment:correct:contrast.pvalue" : "High/Low Contrast"
+    "ANOVA trial.segment fvalue" : "During Trial",
+    "ANOVA trial.segment:correct fvalue" : "Correct/Incorrect Response",
+    "ANOVA trial.segment:go fvalue" : "Go/No-Go Stimulus",
+    "ANOVA trial.segment:side fvalue" : "Left/Right Stimulus",
+    "ANOVA trial.segment:correct:contrast fvalue" : "High/Low Contrast",
+    "ANOVA trial.segment pvalue" : "During Trial",
+    "ANOVA trial.segment:correct pvalue" : "Correct/Incorrect Response",
+    "ANOVA trial.segment:go pvalue" : "Go/No-Go Stimulus",
+    "ANOVA trial.segment:side pvalue" : "Left/Right Stimulus",
+    "ANOVA trial.segment:correct:contrast pvalue" : "High/Low Contrast",
+    "ANOVA trial.segment partial_eta2" : "During Trial",
+    "ANOVA trial.segment:correct partial_eta2" : "Correct/Incorrect Response",
+    "ANOVA trial.segment:go partial_eta2" : "Go/No-Go Stimulus",
+    "ANOVA trial.segment:side partial_eta2" : "Left/Right Stimulus",
+    "ANOVA trial.segment:correct:contrast partial_eta2" : "High/Low Contrast"
     }
 
 def count_unique_index(df, by):                                                                                                                                                 
@@ -34,12 +38,21 @@ df = pd.read_csv("C:/Users/viviani/Documents/left_only_collapsed_lm_anova_result
 
 class PieChartAnovaFigure:
     colors = sns.color_palette()
-    def __init__(self,df,dataset='left_only'):
-        pvalue_cols = [c for c in df.columns if 'pvalue' in c]
+    def __init__(self,df,dataset='left_only',statistic='f'):
+        pvalue_cols = [c for c in df.columns if 'pvalue' in c and 'ANOVA' in c]
         fvalue_cols = [c for c in df.columns if 'fvalue' in c]
+        eta_cols    = [c for c in df.columns if 'partial_eta2' in c]
         pvals = df[pvalue_cols]
         fvals = df[fvalue_cols]
-        print(pvalue_cols)
+        evals = df[eta_cols]
+        print(evals.columns)
+        if statistic.lower() in ('f','f value','fvalue'):
+            mode = 'f'
+        elif statistic.lower() in ('e','eta','eta2','eta squared'):
+            mode = 'eta2'
+        else:
+            raise ValueError(f"statistic muse be 'f' or 'eta2', not {statistic}")
+        
         counter = count_unique_index((pvals<0.05),pvalue_cols)
         counter['percent']=counter['count']/counter['count'].sum()
         if dataset=='left_only':     names = np.array(('Trials','Correct','Go'))
@@ -54,18 +67,30 @@ class PieChartAnovaFigure:
         gs = GridSpec(len(fvals.columns),2,figure=self.fig)
         right_ax = []
         left_ax = self.fig.add_subplot(gs[:,0])
-        for i,c in enumerate(fvals.columns):
-            right_ax.append(
-                self.fig.add_subplot(gs[i,1])
-                )
-            right_ax[i].hist(fvals[c][pvals[c.replace('fvalue','pvalue')]<0.05],
-                         label = readable_titles[c],
-                         color = self.colors[i])
-            right_ax[i].legend()
+        if mode=='f':
+            for i,c in enumerate(fvals.columns):
+                right_ax.append(
+                    self.fig.add_subplot(gs[i,1])
+                    )
+                right_ax[i].hist(fvals[c][pvals[c.replace('fvalue','pvalue')]<0.05],
+                             label = readable_titles[c],
+                             color = self.colors[i])
+                right_ax[i].legend()
+        elif mode=='eta2':
+            print('check1')
+            for i,c in enumerate(evals.columns):
+                print('loop')
+                right_ax.append(
+                    self.fig.add_subplot(gs[i,1])
+                    )
+                right_ax[i].hist(evals[c][pvals[c.replace('partial_eta2','pvalue')]<0.05],
+                             label = readable_titles[c],
+                             color = self.colors[i])
+                right_ax[i].legend()
         
 
         right_ax[2].set_ylabel("Frequency")
-        right_ax[-1].set_xlabel("F value")
+        right_ax[-1].set_xlabel("F value" if mode=='f' else "Partial $\eta^2$")
         
         wedges,text1,text2 = left_ax.pie(counter['count'],#labels=names,
                                 autopct='%1.f%%',counterclock=True,
@@ -80,24 +105,36 @@ class PieChartAnovaFigure:
             ang = (p.theta2 - p.theta1)/2. + p.theta1
             y = np.sin(np.deg2rad(ang))
             x = np.cos(np.deg2rad(ang))
+            text_xy = (x*1.2,y*1.2)
+            if dataset=='left_only':
+                if names[i]=="Trials&Go":
+                    text_xy = (text_xy[0]+0.1,text_xy[1]-0.1)
+                elif names[i]=="Trials&Correct":
+                    text_xy = (text_xy[0]-0.2,text_xy[1]+0.05)
             horizontalalignment = {-1: "right", 1: "left"}[int(np.sign(x))]
             annotations.append(
                 left_ax.annotate(names[i], xy=(x, y), 
-                                 xytext=(x+np.sign(x)*0.2,y*1.2),
+                                 xytext= text_xy,
                                  annotation_clip=False,
                                  horizontalalignment=horizontalalignment, 
                                  **kw)
                 )
         left_ax.set_title("Significance of predictors on ROI Fluorescence")
-        right_ax[0].set_title("F values of predictors (when significant)")
+        if mode=='f':
+            right_ax[0].set_title("F values of predictors (when significant)")
+        elif mode=='eta2':
+            right_ax[0].set_title("Partial Eta Squared values of predictors (when significant)")
         new_xlim = (0,None)
         for a in right_ax: a.set_xlim(new_xlim); a.legend(loc='upper right')
-        adjust_text(annotations)
     def show(self):
         self.fig.show()
 
-df = pd.read_csv("C:/Users/viviani/Documents/dump.csv")
-PieChartAnovaFigure(df,'left_only').show()
+df1 = pd.read_csv("C:/Users/viviani/Documents/results_left_only.csv")
+PieChartAnovaFigure(df1,'left_only','eta').show()
+df2 = pd.read_csv("C:/Users/viviani/Documents/results_binocular.csv")
+PieChartAnovaFigure(df2,'both_sides','eta').show()
+df3 = pd.read_csv("C:/Users/viviani/Documents/results_low_contrast.csv")
+PieChartAnovaFigure(df3,'low_contrast','eta').show()
 
 # pvals = df[["trial.segment.pvalue",
 #             "trial.segment:correct.pvalue",
