@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.gridspec import GridSpec
 from matplotlib.lines import Line2D
+from sklearn.decomposition import PCA
 import seaborn as sns
 sns.set_style("darkgrid")
 
@@ -156,26 +157,21 @@ class CollapsedModelCoefficientEstimatesFigure:
         ax[1][0].set_title("Effect of Correct/Incorrect")
         ax[1][0].plot(correct.transpose(),color='k',alpha=0.05)
         
-        ax[1][1].set_title('Overall Estimates')
+        ax[1][1].set_title('Overall Mean Estimates')
         ax[1][1].set_ylabel("Prediction ($\Delta$F/F0 units)")
-        hits = (intercept + main_effect + correct + go).transpose()
-        misses = (intercept + main_effect + go).transpose()
-        crs = (intercept + main_effect + correct).transpose()
-        fas = (intercept+main_effect).transpose()
-        for i, (hit,miss,cr,fa) in enumerate(zip(hits,misses,crs,fas)):
-            ax[1][1].plot(hits[i],color='green',
-                          alpha = 0.0125, label = None)
-            ax[1][1].plot(misses[i],color='palegreen',
-                          alpha = 0.0125, label = None)
-            ax[1][1].plot(crs[i],color='red',
-                          alpha = 0.0125, label = None)
-            ax[1][1].plot(fas[i],color='darksalmon',
-                          alpha = 0.0125, label = None)
-        patch1 = mpatches.Patch(color='green', label='Hits')
-        patch2 = mpatches.Patch(color='red', label='Misses')
-        patch3 = mpatches.Patch(color='palegreen', label='False Alarms')
-        patch4 = mpatches.Patch(color='darksalmon', label='Correct Rejections')
-        ax[1][1].legend(handles = [patch1,patch2,patch3,patch4])
+        hits = (intercept + main_effect + correct + go).mean()
+        misses = (intercept + main_effect + go).mean()
+        crs = (intercept + main_effect + correct).mean()
+        fas = (intercept+main_effect).mean()
+        ax[1][1].plot(hits,color='green',
+                      alpha = 1, label = 'Hits')
+        ax[1][1].plot(misses,color='palegreen',
+                      alpha = 1, label = 'Misses')
+        ax[1][1].plot(crs,color='red',
+                      alpha = 1, label = 'Correct Rejections')
+        ax[1][1].plot(fas,color='darksalmon',
+                      alpha = 1, label = 'False Alarms')
+        ax[1][1].legend()
     def show(self):
         self.fig.show()
 
@@ -187,7 +183,7 @@ class LickingModelFigure:
         
         intercept = coefs["lick.coefficient X.Intercept. pvalue"].to_numpy()
         kernels = coefs.iloc[:,1:]
-        self.fig, ax = plt.subplots(ncols = 2, figsize = [8,6],
+        self.fig, ax = plt.subplots(ncols = 3, figsize = [8,6],
                                     tight_layout=True)
 
         artist = ax[0].plot(kernels.transpose(),color='k',alpha = 0.05)
@@ -204,6 +200,7 @@ class LickingModelFigure:
         ax[1].plot(kernels.mean().transpose(),color='k',
                    label = "mean across axons")
         ax[1].legend()
+        ax[2]
     def show(self):
         self.fig.show()
 
@@ -233,15 +230,15 @@ def print_all_findings(df1,df2,df3):
 if __name__=="__main__":
     plt.close('all')
     df1,df2,df3 = read_in_data()
-    print_all_findings(df1,df2,df3)
-    CollapsedModelPieChartAnovaFigure(df1,'left_only','eta').show()
-    CollapsedModelPieChartAnovaFigure(df2,'both_sides','eta').show()
-    CollapsedModelPieChartAnovaFigure(df3,'low_contrast','eta').show()
+    # print_all_findings(df1,df2,df3)
+    # CollapsedModelPieChartAnovaFigure(df1,'left_only','eta').show()
+    # CollapsedModelPieChartAnovaFigure(df2,'both_sides','eta').show()
+    # CollapsedModelPieChartAnovaFigure(df3,'low_contrast','eta').show()
     CollapsedModelCoefficientEstimatesFigure(df1).show()
     CollapsedModelCoefficientEstimatesFigure(df2).show()
     CollapsedModelCoefficientEstimatesFigure(df3).show()  
-    LickingModelFigure(df1).show()
-    LickingModelFigure(df2).show()
-    LickingModelFigure(df3).show()
+    # LickingModelFigure(df1).show()
+    # LickingModelFigure(df2).show()
+    # LickingModelFigure(df3).show()
     
     
