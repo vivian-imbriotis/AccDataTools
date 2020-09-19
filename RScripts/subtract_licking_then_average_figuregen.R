@@ -16,8 +16,8 @@ get_lm_pvalue <- function (modelobject) {
 
 #At times we will want to recoverably log-transform our data
 log_transform <- function(values){
-  minimum <- min(values)
-  log(values - minimum + 10e-16)
+  m <- min(values)
+  log(values - m + 10e-16)
 }
 inverse_log_transform <- function(values, minimum){
   exp(values) + minimum - 10e-16
@@ -43,7 +43,8 @@ collapse.across.time <- function(dat){
   #We first need to select only the timepoints happening in the
   #portion of each trial we care about, then we need to sum 
   #together every K consecutive timepoints. In numpy i'd reshape
-  #and sum along an axis,, but in R oh no oh heck
+  #and sum along an axis, but in R I know of no elegant way to
+  #do this
   df.tone <- dat$dF_on_F[dat$trial_component == 'Tone']
   df.tone <- df.tone[1:num_trials*5]
   df.tone.matr <- matrix(df.tone,nrow=num_trials,ncol=5,byrow=TRUE)
@@ -78,17 +79,16 @@ collapse.across.time <- function(dat){
   return(result)
 }
 
-#Function to perform our main mode of analysis
-analyse_and_produce_csv_of_results <- function(source_file,destination_file,
-                                               side_varying=FALSE,
-                                               contrast_varying=FALSE){
+source_file <- "C:/Users/viviani/Desktop/single_experiments_for_testing/2016-11-01_03_CFEB027.csv"
+side_varying=FALSE
+contrast_varying=FALSE
   
   num_of_free_variables <- (3 + side_varying + contrast_varying)
   #Read in and clean the data
   cat("Reading in data...")
   dat <- read.csv(source_file)
   dat <- dat[!is.na(dat$dF_on_F),]
-  cat("done\nAnalysing...")
+  cat("done\n")
   
   #Construct vectors to hold the results for each ROI
   rois <- unique(dat$ROI_ID)
@@ -147,7 +147,7 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
     anovas[[i]] <- anova(lm.with.licking.subtraction)
     model_pvals[[i]] <- get_lm_pvalue(lm.with.licking.subtraction)
   }
-  
+
   
   #Now construct a dataframe of all the relevant statistics for each ROI
   model_pvals     <- p.adjust(model_pvals, method = "fdr")                 #Overall model significance
@@ -156,7 +156,7 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   coeff_estimates <- data.frame(do.call(rbind, lapply(coeffs,function(x) x[,"Estimate"])))     #Coefficient Estimates
   coeff_pvals     <- data.frame(do.call(rbind, lapply(coeffs,function(x) x[,"Pr(>|t|)"])))
   coeff_pvals_a   <- data.frame(lapply(coeff_pvals, FUN=function(x) p.adjust(x,method='fdr'))) #Coefficient pvalues
-  
+
   licking.coefs   <- lapply(licking_summaries, function(x) x$coefficients)
   licking_estimates <- data.frame(do.call(rbind, lapply(licking.coefs,function(x) x[,"Estimate"])))     #Coefficient Estimates
   licking_pvals     <- data.frame(do.call(rbind, lapply(licking.coefs,function(x) x[,"Pr(>|t|)"])))
@@ -164,8 +164,8 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   #Name each column something sensible
   colnames(coeff_pvals_a)   <- sapply(colnames(coeff_pvals_a),FUN=function(x) paste('coefficient',x,"pvalue",sep=" "))
   colnames(coeff_estimates) <- sapply(colnames(coeff_estimates),FUN=function(x) paste('coefficient',x,"estimate",sep=" "))
-  colnames(licking_estimates)   <- sapply(colnames(licking_estimates),FUN=function(x) paste('lick.coefficient',x,"estimate",sep=" "))
-  colnames(licking_pvals)       <- sapply(colnames(licking_pvals),FUN=function(x) paste('lick.coefficient',x,"pvalue",sep=" "))
+  colnames(licking_estimates)   <- sapply(colnames(licking_estimates),FUN=function(x) paste('coefficient',x,"pvalue",sep=" "))
+  colnames(licking_pvals)       <- sapply(colnames(licking_pvals),FUN=function(x) paste('coefficient',x,"estimate",sep=" "))
   
   anova_frame_pvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) p.adjust(x$`Pr(>F)`,method='fdr')))))   #ANOVA p-values for each var
   anova_frame_fvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`F value`))))  #ANOVA f-values
@@ -184,34 +184,8 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   output_frame$`licking.model pvalue`       <- licking_model_pvalues
   output_frame$`collapsed.model pvalue`     <- model_pvals
   output_frame$`overall.model.adj.rsquared` <- unlist(rsquareds)
-  cat("done\nWriting CSV...")
-  write.csv(output_frame,destination_file)
-  cat("done\n")
-  return(output_frame)
-}
+
+  
 
 
-######################################################
-##    ANALYSIS OF LEFT_ONLY (MONOCULAR) DATASET     ##
-######################################################
-print("Beginning analysis of monocular data...")
-left_only_results <- analyse_and_produce_csv_of_results(source_file_left_only,
-                                                        "results_left_only.csv")
 
-#######################################################
-## ANALYSIS OF BINOCULAR, HIGH-CONTRAST STIM DATASET ##
-#######################################################
-print("Beginning analysis of binocular high contrast data...")
-binocular_high_con_results <- analyse_and_produce_csv_of_results(source_file_left_and_right,
-                                                                 'results_binocular.csv',
-                                                                 side_varying = TRUE)
-
-#######################################################
-## ANALYSIS OF BINOCULAR, LOW-CONTRAST STIM DATASET  ##
-#######################################################
-print("Beginning analysis of low-contrast data...")
-binocular_low_con_results <- analyse_and_produce_csv_of_results(source_file_low_contrast,
-                                                                'results_low_contrast.csv',
-                                                                 side_varying = TRUE,
-                                                                 contrast_varying = TRUE)
-print("...done")

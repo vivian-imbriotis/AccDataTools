@@ -8,7 +8,9 @@ from random import random
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from matplotlib.gridspec import GridSpec
+from matplotlib.lines import Line2D
 import seaborn as sns
 sns.set_style("darkgrid")
 
@@ -36,7 +38,7 @@ def count_unique_index(df, by):
 
 df = pd.read_csv("C:/Users/viviani/Documents/left_only_collapsed_lm_anova_results.csv")
 
-class PieChartAnovaFigure:
+class CollapsedModelPieChartAnovaFigure:
     colors = sns.color_palette()
     def __init__(self,df,dataset='left_only',statistic='f'):
         pvalue_cols = [c for c in df.columns if 'pvalue' in c and 'ANOVA' in c]
@@ -45,7 +47,6 @@ class PieChartAnovaFigure:
         pvals = df[pvalue_cols]
         fvals = df[fvalue_cols]
         evals = df[eta_cols]
-        print(evals.columns)
         if statistic.lower() in ('f','f value','fvalue'):
             mode = 'f'
         elif statistic.lower() in ('e','eta','eta2','eta squared'):
@@ -77,9 +78,7 @@ class PieChartAnovaFigure:
                              color = self.colors[i])
                 right_ax[i].legend()
         elif mode=='eta2':
-            print('check1')
             for i,c in enumerate(evals.columns):
-                print('loop')
                 right_ax.append(
                     self.fig.add_subplot(gs[i,1])
                     )
@@ -129,73 +128,120 @@ class PieChartAnovaFigure:
     def show(self):
         self.fig.show()
 
-df1 = pd.read_csv("C:/Users/viviani/Documents/results_left_only.csv")
-PieChartAnovaFigure(df1,'left_only','eta').show()
-df2 = pd.read_csv("C:/Users/viviani/Documents/results_binocular.csv")
-PieChartAnovaFigure(df2,'both_sides','eta').show()
-df3 = pd.read_csv("C:/Users/viviani/Documents/results_low_contrast.csv")
-PieChartAnovaFigure(df3,'low_contrast','eta').show()
+class CollapsedModelCoefficientEstimatesFigure:
+    def __init__(self,df):
+        colnames = ("Tone Bin","Stimulus Bin","Response Bin")
+        coefs = df[[c for c in df1.columns if ('coefficient' in c and 
+                                                'estimate' in c and
+                                                'lick' not in c)]]
+        intercept = coefs["coefficient X.Intercept. estimate"].to_numpy()
+        intercept = np.stack([intercept]*3).transpose()
+        main_effect = coefs.iloc[:,0:3]
+        main_effect.columns = colnames
+        main_effect.loc[:,"Tone Bin"] = 0
+        correct = coefs[[c for c in coefs.columns if 'correct1' in c]]
+        go      =  coefs[[c for c in coefs.columns if 'go1' in c]]
+        correct.columns = colnames
+        go.columns      = colnames
+        self.fig, ax = plt.subplots(ncols = 2, nrows = 2)
+        ax[0][0].set_ylabel("Estimated effect ($\Delta$F/F0 units)")
+        ax[0][0].set_title("Main Effect of Trial")
+        ax[0][0].plot(main_effect.transpose(), color = 'k',
+                      alpha=0.05)
+        ax[0][1].set_ylabel("Estimated effect ($\Delta$F/F0 units)")
+        ax[0][1].set_title("Effect of Go/No-go")
+        ax[0][1].plot(go.transpose(),color='k',alpha=0.05)
+        
+        ax[1][0].set_ylabel("Estimated effect ($\Delta$F/F0 units)")
+        ax[1][0].set_title("Effect of Correct/Incorrect")
+        ax[1][0].plot(correct.transpose(),color='k',alpha=0.05)
+        
+        ax[1][1].set_title('Overall Estimates')
+        ax[1][1].set_ylabel("Prediction ($\Delta$F/F0 units)")
+        hits = (intercept + main_effect + correct + go).transpose()
+        misses = (intercept + main_effect + go).transpose()
+        crs = (intercept + main_effect + correct).transpose()
+        fas = (intercept+main_effect).transpose()
+        for i, (hit,miss,cr,fa) in enumerate(zip(hits,misses,crs,fas)):
+            ax[1][1].plot(hits[i],color='green',
+                          alpha = 0.0125, label = None)
+            ax[1][1].plot(misses[i],color='palegreen',
+                          alpha = 0.0125, label = None)
+            ax[1][1].plot(crs[i],color='red',
+                          alpha = 0.0125, label = None)
+            ax[1][1].plot(fas[i],color='darksalmon',
+                          alpha = 0.0125, label = None)
+        patch1 = mpatches.Patch(color='green', label='Hits')
+        patch2 = mpatches.Patch(color='red', label='Misses')
+        patch3 = mpatches.Patch(color='palegreen', label='False Alarms')
+        patch4 = mpatches.Patch(color='darksalmon', label='Correct Rejections')
+        ax[1][1].legend(handles = [patch1,patch2,patch3,patch4])
+    def show(self):
+        self.fig.show()
 
-# pvals = df[["trial.segment.pvalue",
-#             "trial.segment:correct.pvalue",
-#             "trial.segment:go.pvalue"]]
-# fvals = df[["trial.segment.fvalue",
-#             "trial.segment:correct.fvalue",
-#             "trial.segment:go.fvalue"]]
+class LickingModelFigure:
+    def __init__(self,df):
+        coefs = df[[c for c in df.columns if ('coefficient' in c and 
+                                                'pvalue' in c and
+                                                'lick' in c)]]
+        
+        intercept = coefs["lick.coefficient X.Intercept. pvalue"].to_numpy()
+        kernels = coefs.iloc[:,1:]
+        self.fig, ax = plt.subplots(ncols = 2, figsize = [8,6],
+                                    tight_layout=True)
 
-# counter = count_unique_index((pvals<0.05),["trial.segment.pvalue",
-#                                            "trial.segment:correct.pvalue",
-#                                            "trial.segment:go.pvalue"])
-# counter['percent']=counter['count']/counter['count'].sum()
+        artist = ax[0].plot(kernels.transpose(),color='k',alpha = 0.05)
+        artist[0].set_label('Value for a single ROI')
+        ax[0].legend()
+        ax[0].set_xlabel("$\Delta$t around a lick")
+        ax[0].set_ylabel("Coefficient Value")
+        ax[0].set_xticks([0,11,21])
+        ax[0].set_xticklabels([-2,0,2])
+        ax[1].set_ylabel('Coefficient Value')
+        ax[1].set_xlabel("$\Delta$t around a lick")
+        ax[1].set_xticks([0,11,21])
+        ax[1].set_xticklabels([-2,0,2])
+        ax[1].plot(kernels.mean().transpose(),color='k',
+                   label = "mean across axons")
+        ax[1].legend()
+    def show(self):
+        self.fig.show()
 
-# names = np.array(('Trials','Correct','Go'))
-# names = [names[boolrow[:-2].to_numpy().astype('bool')] for _,boolrow in counter.iterrows()]
-# names = ['&'.join(ls) if list(ls) else "None" for ls in names]
-# fig = plt.figure(figsize = [12,5], tight_layout=True)
-# gs = GridSpec(3,2,figure=fig)
-# ax0 = fig.add_subplot(gs[:,0])
-# ax1 = fig.add_subplot(gs[0,1])
-# ax2 = fig.add_subplot(gs[1,1])
-# ax3 = fig.add_subplot(gs[2,1])
-# ax2.set_ylabel("Frequency")
-# ax3.set_xlabel("F value")
-
-
-# colors = sns.color_palette()
-
-
-
-# wedges,text1,text2 = ax0.pie(counter['count'],#labels=names,
-#                         autopct='%1.f%%',counterclock=True,
-#                         startangle=60, pctdistance=0.9)
-
-# bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
-# kw = dict(arrowprops=dict(arrowstyle="-",color='black'),
-#           zorder=5, va="center")
-
-# for i, (p,c) in enumerate(zip(wedges,counter['count'])):
-#     ang = (p.theta2 - p.theta1)/2. + p.theta1
-#     y = np.sin(np.deg2rad(ang))
-#     x = np.cos(np.deg2rad(ang))
-#     horizontalalignment = {-1: "right", 1: "left"}[int(np.sign(x))]
-#     connectionstyle = "angle,angleA=0,angleB={}".format(ang)
-#     kw["arrowprops"].update({"connectionstyle": connectionstyle})
-
-#     ax0.annotate(names[i], xy=(x, y), xytext=(x+np.sign(x)*0.2,
-#                                               y*1.2),
-#                  annotation_clip=False,
-#                  horizontalalignment=horizontalalignment, **kw)
+def print_anova_stats(df):
+    anova_pvals = df[[c for c in df.columns if 'ANOVA' in c and 'pvalue' in c]]
+    print("NUMBER OF SIGNIFICANT ROIS")
+    print(f"total = {len(df)}")
+    print((anova_pvals<0.05).sum())
+    print("\nPERCENTAGE SIGNIFICANT ROIS")
+    print(100*(anova_pvals<0.05).sum()/len(anova_pvals))
+    
+def read_in_data():
+    df1 = pd.read_csv("../RScripts/results_left_only.csv")
+    df2 = pd.read_csv("../RScripts/results_binocular.csv")
+    df3 = pd.read_csv("../RScripts/results_low_contrast.csv")
+    return(df1,df2,df3)
 
 
-# ax0.set_title("Significance of predictors on ROI Fluorescence")
-# ax1.set_title("F values of predictors (when significant)")
-# ax1.hist(fvals["trial.segment.fvalue"][pvals["trial.segment.pvalue"]<0.05],
-#           color = colors[4],label='Trial occuring')
-# ax2.hist(fvals["trial.segment:correct.fvalue"][pvals["trial.segment:correct.pvalue"]<0.05],
-#           color = colors[2], label = 'Correct/Incorrect trial')
-# ax3.hist(fvals["trial.segment:go.fvalue"][pvals["trial.segment:go.pvalue"]<0.05],
-#           color = colors[1], label = 'Go/No-Go trial')
-# xlims = map(lambda a:a.get_xlim(),(ax1,ax2,ax3))
-# new_xlim = (0,None)
-# for a in (ax1,ax2,ax3): a.set_xlim(new_xlim); a.legend(loc='upper right')
-# fig.show()
+
+        
+def print_all_findings(df1,df2,df3):
+    for i,n in zip((df1,df2,df3),('Monocular','Binocular','LowCon')):
+        print(n)
+        print_anova_stats(i)
+        print("\n\n")
+
+if __name__=="__main__":
+    plt.close('all')
+    df1,df2,df3 = read_in_data()
+    print_all_findings(df1,df2,df3)
+    CollapsedModelPieChartAnovaFigure(df1,'left_only','eta').show()
+    CollapsedModelPieChartAnovaFigure(df2,'both_sides','eta').show()
+    CollapsedModelPieChartAnovaFigure(df3,'low_contrast','eta').show()
+    CollapsedModelCoefficientEstimatesFigure(df1).show()
+    CollapsedModelCoefficientEstimatesFigure(df2).show()
+    CollapsedModelCoefficientEstimatesFigure(df3).show()  
+    LickingModelFigure(df1).show()
+    LickingModelFigure(df2).show()
+    LickingModelFigure(df3).show()
+    
+    
