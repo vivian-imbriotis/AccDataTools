@@ -150,7 +150,7 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   
   
   #Now construct a dataframe of all the relevant statistics for each ROI
-  model_pvals     <- p.adjust(model_pvals, method = "fdr")                 #Overall model significance
+  model_pvals_a     <- p.adjust(model_pvals, method = "fdr")                 #Overall model significance
   rsquareds       <- lapply(summary_objects, function(x) x$adj.r.squared)  #Overall adjusted R squared
   coeffs          <- lapply(summary_objects, function(x) x$coefficients)   
   coeff_estimates <- data.frame(do.call(rbind, lapply(coeffs,function(x) x[,"Estimate"])))     #Coefficient Estimates
@@ -162,6 +162,7 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   licking_pvals     <- data.frame(do.call(rbind, lapply(licking.coefs,function(x) x[,"Pr(>|t|)"])))
   
   #Name each column something sensible
+  colnames(coeff_pvals)   <- sapply(colnames(coeff_pvals_a),FUN=function(x) paste('coefficient',x,"p.unadjusted",sep=" "))
   colnames(coeff_pvals_a)   <- sapply(colnames(coeff_pvals_a),FUN=function(x) paste('coefficient',x,"pvalue",sep=" "))
   colnames(coeff_estimates) <- sapply(colnames(coeff_estimates),FUN=function(x) paste('coefficient',x,"estimate",sep=" "))
   colnames(licking_estimates)   <- sapply(colnames(licking_estimates),FUN=function(x) paste('lick.coefficient',x,"estimate",sep=" "))
@@ -180,9 +181,10 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   anova_frame_pvals <- anova_frame_pvals[,1:num_of_free_variables]
   anova_frame_fvals <- anova_frame_fvals[,1:num_of_free_variables]
   #Glue everything together and dump to CSV
-  output_frame <- cbind(anova_frame_pvals,anova_frame_fvals, anova_frame_etas, coeff_pvals_a,coeff_estimates, licking_estimates,licking_pvals)
+  output_frame <- cbind(anova_frame_pvals,anova_frame_fvals, anova_frame_etas, coeff_pvals, coeff_pvals_a,coeff_estimates, licking_estimates,licking_pvals)
   output_frame$`licking.model pvalue`       <- licking_model_pvalues
-  output_frame$`collapsed.model pvalue`     <- model_pvals
+  output_frame$`collapsed.model pvalue`     <- model_pvals_a
+  output_frame$`collapsed.model p.unadjusted`<-model_pvals
   output_frame$`overall.model.adj.rsquared` <- unlist(rsquareds)
   cat("done\nWriting CSV...")
   write.csv(output_frame,destination_file)

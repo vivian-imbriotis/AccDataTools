@@ -226,7 +226,8 @@ class LickingModelFigure:
         pca_ax[2].plot(pc3)
         self.fig4 = plt.figure()
         self.ax3d = self.fig4.add_subplot(111, projection='3d')
-        self.ax3d.scatter(kernels_in_pcs[:,0],kernels_in_pcs[:,1],kernels_in_pcs[:,2])
+        self.ax3d.scatter(kernels_in_pcs[:,0],kernels_in_pcs[:,1],kernels_in_pcs[:,2],
+                          s = 1)
         self.ax3d.set_xlabel("Component 1")
         self.ax3d.set_ylabel("Component 2")
         self.ax3d.set_zlabel("Component 3")
@@ -237,7 +238,7 @@ class LickingModelFigure:
     def save(self,name):
         angle = 3
         ani = animation.FuncAnimation(self.fig4, self.rotate, frames=np.arange(0, 360, angle), interval=50, repeat = True)
-        ani.save(f'{name}.gif', writer=animation.PillowWriter(fps=20, loop=0))
+        ani.save(f'{name}.gif', writer=animation.PillowWriter(fps=20))
     def show(self):
         self.fig1.show()
         self.fig3.show()
@@ -281,7 +282,8 @@ if __name__=="__main__":
     # fig.save("high_contrast_licking_pca")
     while True:
         try:
-            # LickingModelFigure(df2).save("bilat_highcon_licking_pca")
+            LickingModelFigure(df1).save("unilat_highcon_licking")
+            LickingModelFigure(df2).save("bilat_highcon_licking_pca")
             LickingModelFigure(df3).save("lowcon_licking_pca")
             break
         except ValueError:
