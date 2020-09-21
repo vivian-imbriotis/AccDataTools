@@ -11,8 +11,10 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.gridspec import GridSpec
 from matplotlib.lines import Line2D
+from mpl_toolkits.mplot3d import Axes3D
 from sklearn.decomposition import PCA
 import seaborn as sns
+from matplotlib import animation
 sns.set_style("darkgrid")
 
 
@@ -175,6 +177,7 @@ class CollapsedModelCoefficientEstimatesFigure:
     def show(self):
         self.fig.show()
 
+a = None
 class LickingModelFigure:
     def __init__(self,df):
         coefs = df[[c for c in df.columns if ('coefficient' in c and 
@@ -183,7 +186,7 @@ class LickingModelFigure:
         
         intercept = coefs["lick.coefficient X.Intercept. pvalue"].to_numpy()
         kernels = coefs.iloc[:,1:]
-        self.fig, ax = plt.subplots(ncols = 3, figsize = [8,6],
+        self.fig1, ax = plt.subplots(ncols = 2, figsize = [8,6],
                                     tight_layout=True)
 
         artist = ax[0].plot(kernels.transpose(),color='k',alpha = 0.05)
@@ -200,9 +203,45 @@ class LickingModelFigure:
         ax[1].plot(kernels.mean().transpose(),color='k',
                    label = "mean across axons")
         ax[1].legend()
-        ax[2]
+        # self.fig2, pca_ax = plt.subplots(ncols=3)
+        pca = PCA(n_components=2)
+        kernels_in_pca_coords = pca.fit_transform(kernels.to_numpy())
+        # pc1, pc2 = pca.components_
+        # pca_ax[2].plot(kernels_in_pca_coords[:,0],kernels_in_pca_coords[:,1],'o')
+        # pca_ax[2].set_ylabel("Second Pricipal Component")
+        # pca_ax[2].set_xlabel("First Principal Component")
+        # pca_ax[0].plot(pc1)
+        # pca_ax[0].set_title("First Principal Component")
+        # pca_ax[1].plot(pc2)
+        # pca_ax[1].set_title("Second Principal Component")
+        pca = PCA(n_components = 3)
+        kernels_in_pcs = pca.fit_transform(kernels.to_numpy())
+        pc1,pc2,pc3 = pca.components_
+        self.fig3, pca_ax = plt.subplots(ncols=3)
+        pca_ax[0].plot(pc1)
+        pca_ax[0].set_title("First Principal Component")
+        pca_ax[1].plot(pc2)
+        pca_ax[1].set_title("Second Principal Component")
+        pca_ax[2].set_title("Third Principal Component")
+        pca_ax[2].plot(pc3)
+        self.fig4 = plt.figure()
+        self.ax3d = self.fig4.add_subplot(111, projection='3d')
+        self.ax3d.scatter(kernels_in_pcs[:,0],kernels_in_pcs[:,1],kernels_in_pcs[:,2])
+        self.ax3d.set_xlabel("Component 1")
+        self.ax3d.set_ylabel("Component 2")
+        self.ax3d.set_zlabel("Component 3")
+        
+
+    def rotate(self,angle):
+         self.ax3d.view_init(azim=angle)
+    def save(self,name):
+        angle = 3
+        ani = animation.FuncAnimation(self.fig4, self.rotate, frames=np.arange(0, 360, angle), interval=50, repeat = True)
+        ani.save(f'{name}.gif', writer=animation.PillowWriter(fps=20, loop=0))
     def show(self):
-        self.fig.show()
+        self.fig1.show()
+        self.fig3.show()
+        self.fig4.show()
 
 def print_anova_stats(df):
     anova_pvals = df[[c for c in df.columns if 'ANOVA' in c and 'pvalue' in c]]
@@ -234,11 +273,18 @@ if __name__=="__main__":
     # CollapsedModelPieChartAnovaFigure(df1,'left_only','eta').show()
     # CollapsedModelPieChartAnovaFigure(df2,'both_sides','eta').show()
     # CollapsedModelPieChartAnovaFigure(df3,'low_contrast','eta').show()
-    CollapsedModelCoefficientEstimatesFigure(df1).show()
-    CollapsedModelCoefficientEstimatesFigure(df2).show()
-    CollapsedModelCoefficientEstimatesFigure(df3).show()  
-    # LickingModelFigure(df1).show()
-    # LickingModelFigure(df2).show()
-    # LickingModelFigure(df3).show()
-    
+    # CollapsedModelCoefficientEstimatesFigure(df1).show()
+    # CollapsedModelCoefficientEstimatesFigure(df2).show()
+    # CollapsedModelCoefficientEstimatesFigure(df3).show()  
+    plt.ioff()
+    # fig = LickingModelFigure(df1)
+    # fig.save("high_contrast_licking_pca")
+    while True:
+        try:
+            # LickingModelFigure(df2).save("bilat_highcon_licking_pca")
+            LickingModelFigure(df3).save("lowcon_licking_pca")
+            break
+        except ValueError:
+            pass
+        
     
