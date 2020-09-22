@@ -74,7 +74,9 @@ class ExperimentFigure:
         fig, ax = plt.subplots()
         if end==-1: end = self.dF_on_F.shape[1]-1
         max_brightness = np.percentile(self.dF_on_F[:,start:end],99)
-        ax.imshow(np.clip(self.dF_on_F[:,start:end],-0.2,max_brightness), origin = 'lower')
+        artist = ax.imshow(np.clip(self.dF_on_F[:,start:end],-0.2,max_brightness), 
+                           origin = 'lower')
+        fig.colorbar(artist, orientation = 'vertical')
         ax.set_xlabel("Time (Frames)")
         ax.set_ylabel("ROIs (PCA-sorted)")
         for trial, trial_start, trial_end in zip(self.trials, self.start_idxs,self.end_idxs):
@@ -126,8 +128,40 @@ class NeuropilExperimentFigure(ExperimentFigure):
         self.start_idxs, self.end_idxs = self.get_trial_attributes(frame_times)
         print("...done")
 
+class RawExperimentFigure(ExperimentFigure):
+    '''
+    A heatmap of all the raw fluorescence traces over an experiment.
+    
+    Parameters
+    ----------
+    exp_path : string
+        The root path of an experiment.
+    '''
+    def __init__(self,exp_path):
+        seaborn.set_style("dark")
+        print(f"Loading data from {exp_path}")
+        self.trials, self.recording = get_trials_in_recording(exp_path, return_se=True,
+                                                              ignore_dprime=True)
+        print("Running rastermap on fluorescence data")
+        r = Rastermap()
+        r.fit(self.recording.F)
+        #Sort by rastermap embedding
+        print("Sorting traces by rastermap ordering")
+        self.dF_on_F = self.recording.F[r.isort]
+        timeline_path  = os.path.join(exp_path,
+                                  item(
+                                      [s for s in os.listdir(exp_path) if 'Timeline.mat' in s]))
+        
+        print("Fetching Frame Times...")
+        frame_times = get_neural_frame_times(timeline_path, self.recording.ops["nframes"])
+        print("Fetching licking information...")
+        self.licks = get_lick_state_by_frame(timeline_path, frame_times)
+        print("Aligning frames with trials...")
+        self.start_idxs, self.end_idxs = self.get_trial_attributes(frame_times)
+        print("...done")
+
 
 if __name__=="__main__":
-    fig = ExperimentFigure(
-        "H:/Local_Repository/CFEB027/2016-10-07_03_CFEB027")
+    fig = RawExperimentFigure(
+        "D:/Local_Repository/CFEB027/2016-10-07_03_CFEB027")
     fig.show()

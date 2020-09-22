@@ -125,7 +125,9 @@ class LinearApproximationFigure(KernelExampleFigure):
         prediction.set_title("(D) Kernel Approach")
         prediction.set_xlabel("time")
         prediction.set_ylabel("∆f/f")
-        prediction.plot(*self.predict(),color='k', linestyle = "--")
+        prediction.plot(*self.predict(),color='k', linestyle = "--",
+                        label = "Predicted Fluorescence")
+        prediction.legend()
         ylim = prediction.get_ylim()
         approximation.set_title("(E) Kernel-like Linear Regression")
         approximation.set_xlabel("time")

@@ -175,7 +175,7 @@ class EyeVideoSyncFigure:
                 self.lick_axis.set_title("Licking state")
                 licktext = self.lick_axis.text(xmin+0.05,
                                     (ymax-ymin)/2, 
-                                    "Lick! :D" if is_licking else "",
+                                    "Lick" if is_licking else "",
                                     color = "black",
                                     fontsize = '24',
                                     va = 'center')
@@ -293,7 +293,7 @@ def video_from_dir_of_frames(dirpath):
         os.system(
           "C:\\Users\\viviani\\ffmpeg\\bin\\.\\ffmpeg.exe -r 20 -f image2 -i"+
           f" {dirpath}\\%d.png -vcodec libx264 -crf 25  -pix_fmt yuv420p"+
-          f" {dirpath}.mp4")
+          f" {dirpath}.gif")
         
 if __name__=="__main__":
     eyecam_video_file = ("C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/videos/"+

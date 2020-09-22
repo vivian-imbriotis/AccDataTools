@@ -1,6 +1,6 @@
 source_file <- "C:/Users/viviani/Desktop/single_experiments_for_testing/2016-11-05_03_CFEB029.csv"
 
-set.seed(123456789)
+set.seed(123456789) #Non
 
 
 require("lmtest")
@@ -77,11 +77,13 @@ full.model.pvals <- numeric(n)
 full.model.stats <- numeric(n)
 full.model.rsqds <- numeric(n)
 full.model.shapiro.stat <- numeric(n)
+full.model.shapiro.pval <- numeric(n)
 
 collapsed.model.pvals <- numeric(n)
 collapsed.model.stats <- numeric(n)
 collapsed.model.rsqds <- numeric(n)
 collapsed.model.shapiro.stat <- numeric(n)
+collapsed.model.shapiro.pval <- numeric(n)
 
 
 for (i in 1:n){
@@ -115,8 +117,10 @@ for (i in 1:n){
   full.model.rsqds[i] <- summary(full.model)$adj.r.squared
   
   full.model.residuals <- full.model$fitted.values - roidat[roidat$trial_factor!=-999,]$dF_on_F
-  full.model.shapiro.stat[i] <- shapiro.test(sample(full.model.residuals,
-                                                     min(3000,length(full.model.residuals))))$statistic
+  full.model.shapiro.test <- shapiro.test(sample(full.model.residuals,
+                                                 min(100,length(full.model.residuals))))
+  full.model.shapiro.stat[i] <- full.model.shapiro.test$statistic
+  full.model.shapiro.pval[i] <-full.model.shapiro.test$p.value
   
   collapsed.model.test<- lmtest::dwtest(collapsed.model)
   collapsed.model.pvals[i] <- collapsed.model.test$p.value
@@ -125,9 +129,11 @@ for (i in 1:n){
 
   collapsed.model.residuals <- (collapsed.model$fitted.values - 
                                     collapsed.after.licking.subtraction$mean.dF)
-  collapsed.model.shapiro.stat[i] <- shapiro.test(sample(
-                                                collapsed.model.residuals,
-                                                min(3000,length(collapsed.model.residuals))))$statistic
+  collapsed.model.shapiro.test <- shapiro.test(sample(
+                                      collapsed.model.residuals,
+                                      min(100,length(collapsed.model.residuals))))
+  collapsed.model.shapiro.stat[i] <- collapsed.model.shapiro.test$statistic
+  collapsed.model.shapiro.pval[i] <- collapsed.model.shapiro.test$p.value
   
 }
 

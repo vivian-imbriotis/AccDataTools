@@ -39,7 +39,6 @@ readable_titles = {
 def count_unique_index(df, by):                                                                                                                                                 
     return df.groupby(by).size().reset_index().rename(columns={0:'count'})
 
-df = pd.read_csv("C:/Users/viviani/Documents/left_only_collapsed_lm_anova_results.csv")
 
 class CollapsedModelPieChartAnovaFigure:
     colors = sns.color_palette()
@@ -259,6 +258,10 @@ def read_in_data():
     return(df1,df2,df3)
 
 
+class SubtypedROIsWithSignificantTrialResponseFigure:
+    def __init__(self):
+            coefs = df[[c for c in df.columns if ('ANOVA' in c and 
+                                            'pvalue' in c)]]
 
         
 def print_all_findings(df1,df2,df3):
