@@ -39,8 +39,6 @@ readable_titles = {
 def count_unique_index(df, by):                                                                                                                                                 
     return df.groupby(by).size().reset_index().rename(columns={0:'count'})
 
-df = pd.read_csv("C:/Users/viviani/Documents/left_only_collapsed_lm_anova_results.csv")
-
 class CollapsedModelPieChartAnovaFigure:
     colors = sns.color_palette()
     def __init__(self,df,dataset='left_only',statistic='f'):
@@ -277,16 +275,17 @@ if __name__=="__main__":
     # CollapsedModelCoefficientEstimatesFigure(df1).show()
     # CollapsedModelCoefficientEstimatesFigure(df2).show()
     # CollapsedModelCoefficientEstimatesFigure(df3).show()  
+    LickingModelFigure(df1).show()
     plt.ioff()
     # fig = LickingModelFigure(df1)
     # fig.save("high_contrast_licking_pca")
-    while True:
-        try:
-            LickingModelFigure(df1).save("unilat_highcon_licking")
-            LickingModelFigure(df2).save("bilat_highcon_licking_pca")
-            LickingModelFigure(df3).save("lowcon_licking_pca")
-            break
-        except ValueError:
-            pass
+    # while True:
+    #     try:
+    #         LickingModelFigure(df1).save("unilat_highcon_licking")
+    #         LickingModelFigure(df2).save("bilat_highcon_licking_pca")
+    #         LickingModelFigure(df3).save("lowcon_licking_pca")
+    #         break
+    #     except ValueError:
+    #         pass
         
     

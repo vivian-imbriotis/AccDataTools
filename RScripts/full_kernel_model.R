@@ -53,7 +53,7 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
     roi     <- rois[i]
     subset  <- dat[dat$ROI_ID==roi,]
     minimum <- min(subset$dF_on_F)
-    subset$logged_df <- log_transform(subset$dF_on_F)
+    subset$logged.df <- log_transform(subset$dF_on_F)
     if(contrast_varying && side_varying){
       model<- lm(logged.df ~ lick_factor + 
                              trial_factor +
@@ -77,11 +77,8 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
                              data = subset)
     }
     summary_objects[[i]] <- summary(model)
-    model_pvals[i]  <-get_lm_pvalue(modelobject = )
+    model_pvals[i]  <-get_lm_pvalue(modelobject = model)
     anovas[[i]] <- anova(model)
-    summary_objects[[i]] <- summary(lm.with.licking.subtraction)
-    anovas[[i]] <- anova(lm.with.licking.subtraction)
-    model_pvals[[i]] <- get_lm_pvalue(lm.with.licking.subtraction)
   }
   
   
