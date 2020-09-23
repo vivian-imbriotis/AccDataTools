@@ -39,6 +39,9 @@ readable_titles = {
 def count_unique_index(df, by):                                                                                                                                                 
     return df.groupby(by).size().reset_index().rename(columns={0:'count'})
 
+<<<<<<< HEAD
+=======
+>>>>>>> 2ffeaeba650c5928f31860034ff22f1e31c133e3
 class CollapsedModelPieChartAnovaFigure:
     colors = sns.color_palette()
     def __init__(self,df,dataset='left_only',statistic='f'):
@@ -131,20 +134,25 @@ class CollapsedModelPieChartAnovaFigure:
 
 class CollapsedModelCoefficientEstimatesFigure:
     def __init__(self,df):
-        colnames = ("Tone Bin","Stimulus Bin","Response Bin")
-        coefs = df[[c for c in df1.columns if ('coefficient' in c and 
+        colnames = ("Response Bin","Stimulus Bin","Tone Bin")
+        coefs = df[[c for c in df.columns if ('coefficient' in c and 
                                                 'estimate' in c and
                                                 'lick' not in c)]]
         intercept = coefs["coefficient X.Intercept. estimate"].to_numpy()
         intercept = np.stack([intercept]*3).transpose()
         main_effect = coefs.iloc[:,0:3]
-        main_effect.columns = colnames
-        main_effect.loc[:,"Tone Bin"] = 0
+        main_effect.columns = list(reversed(colnames))
+        main_effect.loc[:,"Response Bin"] = 0
         correct = coefs[[c for c in coefs.columns if 'correct1' in c]]
         go      =  coefs[[c for c in coefs.columns if 'go1' in c]]
         correct.columns = colnames
         go.columns      = colnames
-        self.fig, ax = plt.subplots(ncols = 2, nrows = 2)
+        main_effect = main_effect[reversed(colnames)]
+        correct = correct[reversed(colnames)]
+        go = go[reversed(colnames)]
+        self.fig, ax = plt.subplots(ncols = 2, nrows = 2,
+                                    tight_layout=True,
+                                    figsize = [8,8])
         ax[0][0].set_ylabel("Estimated effect ($\Delta$F/F0 units)")
         ax[0][0].set_title("Main Effect of Trial")
         ax[0][0].plot(main_effect.transpose(), color = 'k',
@@ -257,7 +265,27 @@ def read_in_data():
     return(df1,df2,df3)
 
 
-
+class SubtypedROIsWithSignificantTrialResponseFigure:
+    def __init__(self,df):
+            pvals_on_anova = df['ANOVA trial.segment pvalue']
+            bins_coefs = df[['coefficient trial.segmentStimulus estimate',
+                           'coefficient trial.segmentTone estimate']]
+            bins_coefs.columns = ["Stimulus Bin","Tone Bin"]
+            bins_coefs['Response Bin'] = 0
+            cols = bins_coefs.columns
+            results_max = bins_coefs.idxmax(axis=1).value_counts()[cols]
+            results_min = bins_coefs.idxmin(axis=1).value_counts()[cols]
+            self.fig,ax = plt.subplots(ncols = 2,tight_layout=True,
+                                       figsize = [8,4])
+            ax[0].set_title("ROIs by time of most activity")
+            ax[0].pie(results_max.values,labels = results_max.index,
+                      autopct='%1.1f%%')
+            ax[1].set_title("ROIs by time of least activity")
+            ax[1].pie(results_min.values,labels=results_min.index,
+                      autopct='%1.1f%%')
+    def show(self):
+        self.fig.show()
+            
         
 def print_all_findings(df1,df2,df3):
     for i,n in zip((df1,df2,df3),('Monocular','Binocular','LowCon')):
@@ -267,7 +295,7 @@ def print_all_findings(df1,df2,df3):
 
 if __name__=="__main__":
     plt.close('all')
-    df1,df2,df3 = read_in_data()
+    # df1,df2,df3 = read_in_data()
     # print_all_findings(df1,df2,df3)
     # CollapsedModelPieChartAnovaFigure(df1,'left_only','eta').show()
     # CollapsedModelPieChartAnovaFigure(df2,'both_sides','eta').show()
@@ -287,5 +315,4 @@ if __name__=="__main__":
     #         break
     #     except ValueError:
     #         pass
-        
-    
+
