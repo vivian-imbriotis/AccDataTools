@@ -15,6 +15,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from sklearn.decomposition import PCA
 import seaborn as sns
 from matplotlib import animation
+import json
 sns.set_style("darkgrid")
 
 
@@ -39,9 +40,7 @@ readable_titles = {
 def count_unique_index(df, by):                                                                                                                                                 
     return df.groupby(by).size().reset_index().rename(columns={0:'count'})
 
-<<<<<<< HEAD
-=======
->>>>>>> 2ffeaeba650c5928f31860034ff22f1e31c133e3
+
 class CollapsedModelPieChartAnovaFigure:
     colors = sns.color_palette()
     def __init__(self,df,dataset='left_only',statistic='f'):
@@ -141,7 +140,7 @@ class CollapsedModelCoefficientEstimatesFigure:
         intercept = coefs["coefficient X.Intercept. estimate"].to_numpy()
         intercept = np.stack([intercept]*3).transpose()
         main_effect = coefs.iloc[:,0:3]
-        main_effect.columns = list(reversed(colnames))
+        main_effect.columns = colnames
         main_effect.loc[:,"Response Bin"] = 0
         correct = coefs[[c for c in coefs.columns if 'correct1' in c]]
         go      =  coefs[[c for c in coefs.columns if 'go1' in c]]
@@ -187,10 +186,10 @@ a = None
 class LickingModelFigure:
     def __init__(self,df):
         coefs = df[[c for c in df.columns if ('coefficient' in c and 
-                                                'pvalue' in c and
+                                                'estimate' in c and
                                                 'lick' in c)]]
         
-        intercept = coefs["lick.coefficient X.Intercept. pvalue"].to_numpy()
+        intercept = coefs["lick.coefficient X.Intercept. estimate"].to_numpy()
         kernels = coefs.iloc[:,1:]
         self.fig1, ax = plt.subplots(ncols = 2, figsize = [8,6],
                                     tight_layout=True)
@@ -294,17 +293,17 @@ def print_all_findings(df1,df2,df3):
         print("\n\n")
 
 if __name__=="__main__":
-    plt.close('all')
+    # plt.close('all')
     # df1,df2,df3 = read_in_data()
-    # print_all_findings(df1,df2,df3)
-    # CollapsedModelPieChartAnovaFigure(df1,'left_only','eta').show()
-    # CollapsedModelPieChartAnovaFigure(df2,'both_sides','eta').show()
-    # CollapsedModelPieChartAnovaFigure(df3,'low_contrast','eta').show()
-    # CollapsedModelCoefficientEstimatesFigure(df1).show()
-    # CollapsedModelCoefficientEstimatesFigure(df2).show()
-    # CollapsedModelCoefficientEstimatesFigure(df3).show()  
-    LickingModelFigure(df1).show()
-    plt.ioff()
+    # # print_all_findings(df1,df2,df3)
+    # # CollapsedModelPieChartAnovaFigure(df1,'left_only','eta').show()
+    # # CollapsedModelPieChartAnovaFigure(df2,'both_sides','eta').show()
+    # # CollapsedModelPieChartAnovaFigure(df3,'low_contrast','eta').show()
+    # # CollapsedModelCoefficientEstimatesFigure(df1).show()
+    # # CollapsedModelCoefficientEstimatesFigure(df2).show()
+    # # CollapsedModelCoefficientEstimatesFigure(df3).show()  
+    # LickingModelFigure(df1).show()
+    # plt.ioff()
     # fig = LickingModelFigure(df1)
     # fig.save("high_contrast_licking_pca")
     # while True:
@@ -315,4 +314,6 @@ if __name__=="__main__":
     #         break
     #     except ValueError:
     #         pass
+    # SubtypedROIsWithSignificantTrialResponseFigure(df1).show()
+    CollapsedModelCoefficientEstimatesFigure(df1).show()
 
