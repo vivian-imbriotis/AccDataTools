@@ -95,21 +95,26 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   colnames(coeff_pvals)   <- sapply(colnames(coeff_pvals_a),FUN=function(x) paste('coefficient',x,"p.unadjusted",sep=" "))
   colnames(coeff_pvals_a)   <- sapply(colnames(coeff_pvals_a),FUN=function(x) paste('coefficient',x,"pvalue",sep=" "))
   colnames(coeff_estimates) <- sapply(colnames(coeff_estimates),FUN=function(x) paste('coefficient',x,"estimate",sep=" "))
-
+  
+  anova_frame_pvals_unadjusted <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`Pr(>F)`))))   #ANOVA p-values for each var  
   anova_frame_pvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) p.adjust(x$`Pr(>F)`,method='fdr')))))   #ANOVA p-values for each var
   anova_frame_fvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`F value`))))  #ANOVA f-values
   #Finally, partial eta-squareds as a measure of effect size on ANOVA:
   anova_frame_etas  <- data.frame(t(rbind(sapply(anovas,FUN=function(x) effectsize::eta_squared(x)$Eta_Sq_partial))))
   
+  colnames(anova_frame_pvals_unadjusted) <- sapply(row.names(anovas[[1]]),FUN=function(x) paste('ANOVA',x,"p.unadjusted",sep=" "))
   colnames(anova_frame_pvals) <- sapply(row.names(anovas[[1]]),FUN=function(x) paste('ANOVA',x,"pvalue",sep=" "))
   colnames(anova_frame_fvals) <- sapply(row.names(anovas[[1]]),FUN=function(x) paste('ANOVA',x,"fvalue",sep=" "))
   colnames(anova_frame_etas)  <- sapply(effectsize::eta_squared(anovas[[1]])$Parameter,
                                         FUN=function(x) paste('ANOVA',x,"partial_eta2",sep=" "))
-  #Drop the residuals columns from the ANOVA output matrix
+  #Drop the residuals columns from the ANOVA output 
+  anova_frame_pvals_unadjusted <- anova_frame_pvals_unadjusted[,1:num_of_free_variables]
   anova_frame_pvals <- anova_frame_pvals[,1:num_of_free_variables]
   anova_frame_fvals <- anova_frame_fvals[,1:num_of_free_variables]
   #Glue everything together and dump to CSV
-  output_frame <- cbind(anova_frame_pvals,anova_frame_fvals, anova_frame_etas, coeff_pvals, coeff_pvals_a,coeff_estimates)
+  output_frame <- cbind(anova_frame_pvals_unadjusted,anova_frame_pvals,
+                        anova_frame_fvals, anova_frame_etas, coeff_pvals, 
+                        coeff_pvals_a,coeff_estimates)
   output_frame$`collapsed.model p.unadjsuted`     <- model_pvals
   output_frame$`collapsed.model pvalue`           <- model_pvals_a
   output_frame$`overall.model.adj.rsquared`       <- unlist(rsquareds)

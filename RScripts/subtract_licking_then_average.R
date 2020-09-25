@@ -180,6 +180,7 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   colnames(anova_frame_etas)  <- sapply(effectsize::eta_squared(anovas[[1]])$Parameter,
                                         FUN=function(x) paste('ANOVA',x,"partial_eta2",sep=" "))
   #Drop the residuals columns from the ANOVA output matrix
+  anova_frame_pvals_unadjusted <- anova_frame_pvals_unadjusted[,1:num_of_free_variables]
   anova_frame_pvals <- anova_frame_pvals[,1:num_of_free_variables]
   anova_frame_fvals <- anova_frame_fvals[,1:num_of_free_variables]
   #Glue everything together and dump to CSV
