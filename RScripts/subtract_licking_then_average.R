@@ -167,12 +167,14 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   colnames(coeff_estimates) <- sapply(colnames(coeff_estimates),FUN=function(x) paste('coefficient',x,"estimate",sep=" "))
   colnames(licking_estimates)   <- sapply(colnames(licking_estimates),FUN=function(x) paste('lick.coefficient',x,"estimate",sep=" "))
   colnames(licking_pvals)       <- sapply(colnames(licking_pvals),FUN=function(x) paste('lick.coefficient',x,"pvalue",sep=" "))
-  
+
+  anova_frame_pvals_unadjusted <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`Pr(>F)`))))   #ANOVA p-values for each var  
   anova_frame_pvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) p.adjust(x$`Pr(>F)`,method='fdr')))))   #ANOVA p-values for each var
   anova_frame_fvals <- data.frame(t(rbind(sapply(anovas,FUN=function(x) x$`F value`))))  #ANOVA f-values
   #Finally, partial eta-squareds as a measure of effect size on ANOVA:
   anova_frame_etas  <- data.frame(t(rbind(sapply(anovas,FUN=function(x) effectsize::eta_squared(x)$Eta_Sq_partial))))
   
+  colnames(anova_frame_pvals_unadjusted) <- sapply(row.names(anovas[[1]]),FUN=function(x) paste('ANOVA',x,"p.unadjusted",sep=" "))
   colnames(anova_frame_pvals) <- sapply(row.names(anovas[[1]]),FUN=function(x) paste('ANOVA',x,"pvalue",sep=" "))
   colnames(anova_frame_fvals) <- sapply(row.names(anovas[[1]]),FUN=function(x) paste('ANOVA',x,"fvalue",sep=" "))
   colnames(anova_frame_etas)  <- sapply(effectsize::eta_squared(anovas[[1]])$Parameter,
@@ -181,7 +183,9 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   anova_frame_pvals <- anova_frame_pvals[,1:num_of_free_variables]
   anova_frame_fvals <- anova_frame_fvals[,1:num_of_free_variables]
   #Glue everything together and dump to CSV
-  output_frame <- cbind(anova_frame_pvals,anova_frame_fvals, anova_frame_etas, coeff_pvals, coeff_pvals_a,coeff_estimates, licking_estimates,licking_pvals)
+  output_frame <- cbind(anova_frame_pvals_unadjusted, anova_frame_pvals,anova_frame_fvals, 
+                        anova_frame_etas, coeff_pvals, coeff_pvals_a,coeff_estimates, 
+                        licking_estimates,licking_pvals)
   output_frame$`licking.model pvalue`       <- licking_model_pvalues
   output_frame$`collapsed.model pvalue`     <- model_pvals_a
   output_frame$`collapsed.model p.unadjusted`<-model_pvals
