@@ -191,6 +191,7 @@ analyse_and_produce_csv_of_results <- function(source_file,destination_file,
   output_frame$`collapsed.model pvalue`     <- model_pvals_a
   output_frame$`collapsed.model p.unadjusted`<-model_pvals
   output_frame$`overall.model.adj.rsquared` <- unlist(rsquareds)
+  output_frame$roi_id <- rois
   cat("done\nWriting CSV...")
   write.csv(output_frame,destination_file)
   cat("done\n")

@@ -172,6 +172,7 @@ class CollapsedModelPieChartAnovaFigure:
                                 colors = self.get_colors(modified_counter))
         
         #Each wedge needs a label with a line connecting the wedge to the
+        #label
         kw = dict(arrowprops=dict(arrowstyle="-",color='black'),
                   zorder=5, va="center")
         
@@ -204,19 +205,19 @@ class CollapsedModelPValuesFigure:
     reserved_colors = colors[:5]
     unreserved_colors = colors[5:]
     color_mapping = {
-        'anova_segment_pvalue':reserved_colors[0],
-        'anova_go_pvalue':reserved_colors[1],
-        'anova_correct_pvalue':reserved_colors[2],
-        'anova_side_pvalue':reserved_colors[3],
-        'anova_contrast_pvalue':reserved_colors[4],
+        'anova_segment_p_unadjusted':reserved_colors[0],
+        'anova_go_p_unadjusted':reserved_colors[1],
+        'anova_correct_p_unadjusted':reserved_colors[2],
+        'anova_side_p_unadjusted':reserved_colors[3],
+        'anova_contrast_p_unadjusted':reserved_colors[4],
         }
     def __init__(self,df):
-        anova_pvals = df[[c for c in df.columns if 'anova' in c and 'pvalue' in c]]
+        anova_pvals = df[[c for c in df.columns if 'anova' in c and 'p_unadjusted' in c]]
         self.fig,ax = plt.subplots(ncols = len(anova_pvals.columns),
                               figsize = [12,4],
                               tight_layout=True)
         for idx,c in enumerate(anova_pvals.columns):
-            ax[idx].set_title(readable_titles[c])
+            ax[idx].set_title(readable_titles[c.replace("p_unadjusted","pvalue")])
             ax[idx].hist(anova_pvals[c].values,
                          weights = np.ones(len(anova_pvals[c]))/len(anova_pvals[c]),
                          bins=np.linspace(0,1,50//(len(anova_pvals.columns)-1),
@@ -340,7 +341,7 @@ class LickingModelFigure:
 
     
 def read_in_data():
-    file = open("readable_titles.json",'r')
+    file = open("pythonic_column_names.json",'r')
     d = json.load(file); file.close()
     df1 = pd.read_csv("../RScripts/results_left_only.csv").rename(
         d,axis='columns')
@@ -383,6 +384,9 @@ def print_all_findings(df1,df2,df3):
 
 def print_anova_stats(df):
     anova_pvals = df[[c for c in df.columns if 'anova' in c and 'pvalue' in c]]
+    anova_unadjusted = df[[c for c in df.columns if 
+                           'anova' in c and 'p_unadjusted' in c]]
+    
     print("NUMBER OF SIGNIFICANT ROIS")
     print(f"total = {len(df)}")
     print((anova_pvals<0.05).sum())
@@ -391,10 +395,10 @@ def print_anova_stats(df):
     print("\nPERCENTAGE SIGNIFICANT ROIS")
     print(100*(anova_pvals<0.05).sum()/len(anova_pvals))
     print(f"with no significant predictors    {100*unpredicted/len(anova_pvals)}")
-    for var in anova_pvals.columns:
-        stat, p = combine_pvalues(anova_pvals[var])
-        print(f"{var} was {'NOT' if p>0.05 else ''} significant")
-        print(f"(Fisher's Combined Test, chi2={stat}, p={p})")
+    for var in anova_unadjusted.columns:
+        stat, p = combine_pvalues(anova_unadjusted[var])
+        print(f"{var} was {'NOT' if p>(0.05/12) else ''} significant")
+        print(f"        (Fisher's Combined Test, chi2={stat:.4f}, p={p:.4f})")
         
 
 def TrialKernelFigure(df):
@@ -405,11 +409,11 @@ def TrialKernelFigure(df):
 if __name__=="__main__":
     plt.close('all')
     df1,df2,df3,df4 = read_in_data()
-    print_all_findings(df1,df2,df3)
+    # print_all_findings(df1,df2,df3)
     plt.ioff()
-    CollapsedModelPValuesFigure(df1).show()
-    CollapsedModelPValuesFigure(df2).show()
-    CollapsedModelPValuesFigure(df3).show()
+    # CollapsedModelPValuesFigure(df1).show()
+    # CollapsedModelPValuesFigure(df2).show()
+    # CollapsedModelPValuesFigure(df3).show()
     # CollapsedModelPieChartAnovaFigure(df1,'left_only','eta').show()
     # CollapsedModelPieChartAnovaFigure(df2,'both_sides','eta').show()
     # CollapsedModelPieChartAnovaFigure(df3,'low_contrast','eta').show()

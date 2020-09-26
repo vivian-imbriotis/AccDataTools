@@ -1,5 +1,10 @@
 {
     "Unnamed: 0": "roi_num",
+    "ANOVA trial.segment p.unadjusted": "anova_segment_p_unadjusted",
+    "ANOVA trial.segment:correct p.unadjusted": "anova_correct_p_unadjusted",
+    "ANOVA trial.segment:go p.unadjusted": "anova_go_p_unadjusted",
+    "ANOVA trial.segment:side p.unadjusted": "anova_side_p_unadjusted",
+    "ANOVA trial.segment:correct:contrast p.unadjusted": "anova_contrast_p_unadjusted",    
     "ANOVA trial.segment pvalue": "anova_segment_pvalue",
     "ANOVA trial.segment:correct pvalue": "anova_correct_pvalue",
     "ANOVA trial.segment:go pvalue": "anova_go_pvalue",
