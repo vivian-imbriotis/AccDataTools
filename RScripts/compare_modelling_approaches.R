@@ -138,10 +138,10 @@ for (i in 1:n){
 }
 
 output <- data.frame(full.model.shapiro.stat,full.model.shapiro.pval,
-                     full.model.stats, full.model.pval,
+                     full.model.stats, full.model.pvals,
                      full.model.rsqds,
                      collapsed.model.shapiro.stat, collapsed.model.shapiro.pval,
                      collapsed.model.stats, collapsed.model.pvals,
                      collapsed.model.rsqds)
-write.csv(output_frame, "lin_regress_assumption_statistics.csv")
+write.csv(output, "lin_regress_assumption_statistics.csv")
 

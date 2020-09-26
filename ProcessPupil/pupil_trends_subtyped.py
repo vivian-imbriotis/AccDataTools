@@ -452,6 +452,6 @@ if __name__=="__main__":
     #     df = pd.read_csv("C:/Users/viviani/Desktop/full_datasets_for_analysis/left_only_high_contrast.csv")
     #     create_range_figure(df,normalize=True,range_type="error")
     df = pd.read_csv("C:/Users/viviani/Desktop/single_experiments_for_testing/2016-11-01_03_CFEB027.csv")
-    perform_peritrial_testing(df,render=True)
+    
     
 
