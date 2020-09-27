@@ -401,8 +401,75 @@ def print_anova_stats(df):
         print(f"        (Fisher's Combined Test, chi2={stat:.4f}, p={p:.4f})")
         
 
-def TrialKernelFigure(df):
-    pass
+class TrialKernelFigure:
+    x_for_trials = np.linspace(0,5,25)
+    x_for_licks = np.linspace(-2,2,21)
+    def __init__(self, df, dataset = 'bilateral'):
+        self.dataset = dataset
+        coefs = [c for c in df.columns if 'coefficient' in c and 'estimate' in c]
+        self.lick  = [c for c in coefs if 'lick_factor' in c]
+        self.trial = [c for c in coefs if all(('trial_factor' in c,
+                                         'correct' not in c,
+                                         'go' not in c,
+                                         'contrast' not in c,
+                                         'side' not in c))]
+        self.correct = [c for c in coefs if 'correct' in c]
+        self.go      = [c for c in coefs if 'go' in c]
+        self.side    = [c for c in coefs if 'side' in c]
+        self.rois = df[df['overall.model.adj.rsquared']>0.3]
+        self.figures = []
+        for idx,roi in self.rois.iterrows():
+            self.figures.append(self.create_figure(roi))
+    def create_figure(self,roi):
+        intercept   = roi['coefficient X.Intercept. estimate']
+        trial       = np.append(np.zeros(1),roi[self.trial].to_numpy())
+        lick        = roi[self.lick].to_numpy()
+        correct     = roi[self.correct].to_numpy()
+        go          = roi[self.go].to_numpy()
+        side        = roi[self.side].to_numpy()
+        typical = intercept + trial + (correct + go + side)/2
+        hits    = intercept + trial + correct + go + (side/2)
+        misses  = intercept + trial + go + (side)/2
+        fas     = intercept + trial + (side)/2
+        crs     = intercept + trial + correct + (side)/2
+        fig,ax = plt.subplots(nrows = 3, ncols = 2,
+                              figsize = [8,9],
+                              tight_layout=True)
+
+        ax[0][0].set_title("Hit Trials")
+        ax[0][0].plot(self.x_for_trials, hits)
+        ax[0][1].set_title("Miss Trials")
+        ax[0][1].plot(self.x_for_trials, misses)
+        ax[1][0].set_title("False Alarm Trials")
+        ax[1][0].plot(self.x_for_trials, fas)
+        ax[1][1].set_title("Correct Rejection Trials")
+        ax[1][1].plot(self.x_for_trials, crs)
+        ax[2][0].set_title("Average Trial")
+        ax[2][0].plot(self.x_for_trials,typical)
+        
+        for a in ax.flatten()[:-1]:
+            a.set_xlabel("Time since trial onset")
+            a.set_ylim(-0.5,1)
+            a.set_xlabel('Time within trial (s)')
+            ymin,ymax = a.get_ylim()
+            a.vlines((0,1,3),ymin,ymax,linestyles='dashed',color = 'k')
+            for name,pos in zip(('Tone','Stimulus','Response'),(0,1,3)):
+                a.text(pos+0.1,ymin,name,
+                        horizontalalignment='left',
+                        verticalalignment='bottom')
+        for a in ax[:,0]:
+            a.set_ylabel("Fluorescence ($\Delta$F/F0 units)")
+        ax[2][1].set_title("Licking")
+        ax[2][1].set_ylim(-0.5,1)
+        ax[2][1].plot(self.x_for_licks,lick)
+        ax[2][1].vlines(0,-0.5,1,linestyles='dashed',color='k')
+        ax[2][1].text(0.1,-0.2,'Lick event',ha='left',va='bottom')
+        ax[2][1].set_xlabel("$\Delta$t around licks")
+        
+        return fig
+    def show(self):
+        for figure in self.figures: figure.show()
+                  
 
 
 
@@ -420,6 +487,10 @@ if __name__=="__main__":
     # CollapsedModelCoefficientEstimatesFigure(df1).show()
     # CollapsedModelCoefficientEstimatesFigure(df2).show()
     # CollapsedModelCoefficientEstimatesFigure(df3).show()  
+    # SubtypedROIsWithSignificantTrialResponseFigure(df1).show()
+    # SubtypedROIsWithSignificantTrialResponseFigure(df2).show()
+    # SubtypedROIsWithSignificantTrialResponseFigure(df3).show()
+    TrialKernelFigure(df4).show()
     # LickingModelFigure(df1).show()
     # plt.ioff()
     # fig = LickingModelFigure(df1)
