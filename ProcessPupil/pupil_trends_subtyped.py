@@ -13,9 +13,13 @@ import numpy as np
 import seaborn
 from accdatatools.ToCSV.without_collapsing import RecordingUnroller, get_whole_dataset
 
+seaborn.set_style("darkgrid")
+plt.rcParams["font.family"] = 'Times New Roman'
+plt.rcParams["font.size"] = 11
+
 def plot_trial_subset(axis,correct,go,df,cmap, normalize = False, render = True):
     print(f"Initial shape of df in plot_trial_subset call is {df.shape}")
-    x = np.arange(1,27)
+    x = np.arange(1,26)
     df = df[df.go==go]
     df = df[df.correct==correct]
     df["roi_num"] = np.fromiter(map(lambda s:s.split(" ")[-1],df.ROI_ID),int)
@@ -36,7 +40,7 @@ def plot_trial_subset(axis,correct,go,df,cmap, normalize = False, render = True)
     print(f"Shape of plottable array is {pupils_per_timepoint.shape}")
     if normalize:
         #means of first second
-        means = np.nanmean(pupils_per_timepoint[:,:5], axis = 0)
+        means = np.nanmean(pupils_per_timepoint[:,:5], axis = 1)
         #divide each row by it's own mean!
         pupils_per_timepoint = pupils_per_timepoint / means[:,None]
     for idx,trial in zip(trial_ids,pupils_per_timepoint):
@@ -47,10 +51,10 @@ def plot_trial_subset(axis,correct,go,df,cmap, normalize = False, render = True)
     axis.set_xlim((1,5))
     axis.set_xlabel("time (s)")
     axis.set_ylabel(
-        "size of pupil / initial size of pupil" if normalize else "pupil diameter (pixels)"
+        "size of pupil (ratio to initial size of pupil)" if normalize else "pupil diameter (pixels)"
         )
     if not normalize: axis.set_ylim((0,30))
-    else: axis.set_ylim((0,3))
+    else: axis.set_ylim((0,2.5))
     return (recordings, pupils_per_timepoint)
 
 a = None
@@ -69,13 +73,7 @@ def plot_trial_subset_with_range(axis,correct,go,df, normalize = False,
                                                    columns = "trial_factor", 
                                                    values = "pupil_diameter"
                                                    ).to_numpy()
-    global a;
-    a = df[df.roi_num==0][~(df.peritrial_factor<0)]
-    pupils_per_peritrial = df[df.roi_num==0][~(df.peritrial_factor<0)].pivot(index = "number_of_trials_seen", 
-                                                   columns = "peritrial_factor", 
-                                                   values = "pupil_diameter"
-                                                   )
-    a = pupils_per_peritrial
+
     print(pupils_per_timepoint.shape)
     pupils_per_timepoint[pupils_per_timepoint=="NA"] = np.nan
     pupils_per_timepoint = pupils_per_timepoint.astype(float)
@@ -96,13 +94,12 @@ def plot_trial_subset_with_range(axis,correct,go,df, normalize = False,
                   alpha = 0.3,
                   label = f"Standard {range_type}")
     if not normalize: axis.set_ylim((10,30)); axis.set_ylabel("Pupil diameter (pixels)")
-    else: axis.set_ylim((0.85,1.2)); axis.set_ylabel("Pupil diameter (normalized)")
+    else: axis.set_ylim((0.6,1.2)); axis.set_ylabel("Pupil diameter (normalized)")
     axis.set_xlabel("Time since trial onset (s)")
 
 
 def create_figure(df,title=None, render = True, normalize = False):
     print(f"Initial shape of dataframe in create_figure call is {df.shape}")
-    seaborn.set_style("dark")
     #Clean up dataframe
     df = df[~pd.isnull(df.Trial_ID)]
     #Get an iterator over each peritrial period
@@ -137,13 +134,13 @@ def create_figure(df,title=None, render = True, normalize = False):
     cr_axis.set_title("Correct-Rejection Trials")
     
     #Turn off inner axis ticks and labels
-    hit_axis.set_xticks([])
+    hit_axis.set_xticklabels([])
     hit_axis.set_xlabel("")
-    miss_axis.set_xticks([])    
+    miss_axis.set_xticklabels([])    
     miss_axis.set_xlabel("")
-    miss_axis.set_yticks([])
+    miss_axis.set_yticklabels([])
     miss_axis.set_ylabel("")
-    cr_axis.set_yticks([])
+    cr_axis.set_yticklabels([])
     cr_axis.set_ylabel("")
     
     #ADD A COLORBAR
@@ -158,7 +155,6 @@ def create_figure(df,title=None, render = True, normalize = False):
 
 def create_range_figure(df,title=None, normalize = False, 
                         range_type = "error"):
-    seaborn.set_style("dark")
     df = df[~pd.isnull(df.Trial_ID)]
     fig,ax = plt.subplots(ncols = 2, nrows = 2, constrained_layout = True,
                           figsize = (12,8))
@@ -187,13 +183,13 @@ def create_range_figure(df,title=None, normalize = False,
     
     
     #Turn off inner axis ticks and labels
-    hit_axis.set_xticks([])
+    hit_axis.set_xticklabels([])
     hit_axis.set_xlabel("")
-    miss_axis.set_xticks([])    
+    miss_axis.set_xticklabels([])    
     miss_axis.set_xlabel("")
-    miss_axis.set_yticks([])
+    miss_axis.set_yticklabels([])
     miss_axis.set_ylabel("")
-    cr_axis.set_yticks([])
+    cr_axis.set_yticklabels([])
     cr_axis.set_ylabel("")
     
     if title:
@@ -296,7 +292,7 @@ def plot_peritrial_subset(axis,correct,go,df,cmap, normalize = False, render = T
 
 def create_peritrial_figure(df,title=None, render = True, normalize = False):
     print(f"Initial shape of dataframe in create_figure call is {df.shape}")
-    seaborn.set_style("dark")
+
     #Clean up dataframe
     df = df[~(pd.isnull(df.Trial_ID) & df.peritrial_factor<0)]
     #Get an iterator over each peritrial period
@@ -448,10 +444,11 @@ def create_heatmap_figure(df):
 
 if __name__=="__main__":
     plt.close('all')
-    # with np.errstate(all='raise'):
-    #     df = pd.read_csv("C:/Users/viviani/Desktop/full_datasets_for_analysis/left_only_high_contrast.csv")
-    #     create_range_figure(df,normalize=True,range_type="error")
-    df = pd.read_csv("C:/Users/viviani/Desktop/single_experiments_for_testing/2016-11-01_03_CFEB027.csv")
+    with np.errstate(all='raise'):
+        df = pd.read_csv("C:/Users/viviani/Desktop/full_datasets_for_analysis/left_only_high_contrast.csv")
+        # create_figure(df,normalize=True)
+        create_range_figure(df,normalize=True,range_type="deviation")
+        create_range_figure(df,normalize=True,range_type="error")
     
     
 

@@ -7,19 +7,23 @@ Created on Fri Aug 14 18:43:42 2020
 
 
 import pandas as pd
-import seaborn as sb
+import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-
+sns.set_style("darkgrid")
+plt.rcParams["font.family"] = 'Times New Roman'
+plt.rcParams["font.size"] = 11
 
 
 class PupilModelPredictionFigure:
     def __init__(self, 
-                 path = "C:/Users/viviani/Desktop/pupilfactorpredictions.csv"):
-        sb.set_style("dark")
+                 path = "C:/Users/viviani/Desktop/model predictions/pupilfactorpredictions.csv"):
+
         
         df = pd.read_csv(path)
-        self.fig,ax = plt.subplots(ncols=2,nrows=2)
+        self.fig,ax = plt.subplots(ncols=2,nrows=2,
+                                   figsize=[12,8],
+                                   tight_layout=True)
         #hits
         ax[0][0].set_title("Hits")
         self.plot_with_confidence_interval(ax[0][0], 
@@ -90,3 +94,5 @@ class PupilModelPredictionFigureWithSingleAxis(PupilModelPredictionFigure):
         ax.set_xlabel("Time since trial onset (s)")
 
 
+if __name__=="__main__":
+    PupilModelPredictionFigure("C:/Users/viviani/Desktop/model predictions/mixed_linear_model_pupil_prediction.csv").show()
