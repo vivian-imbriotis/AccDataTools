@@ -10,10 +10,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 import matplotlib.image as mpimg
+import seaborn as sns
 import pandas as pd
 import os
 
 plt.ioff()
+sns.set_style("dark")
+plt.rcParams["font.family"] = 'Times New Roman'
+plt.rcParams["font.size"] = 11
 
 class FittedEyeShape:
     @staticmethod
@@ -384,22 +388,26 @@ def unit_test_data(path):
         ellipse = False
     fittedeye = FittedEyeShape(eye)
     img = mpimg.imread(abs_path)
-    fig,ax = plt.subplots(ncols = 3, figsize = (10,2.3))
+    fig,ax = plt.subplots(ncols = 4, figsize = (10,2.3), tight_layout=True)
     #Plot of labelled points
     ax[0].imshow(img)
-    ax[0].plot(eye[:,0], eye[:,1], 'o', color = "red")
-    ax[0].plot(pupil[:,0], pupil[:,1], 'o', color = "blue")
-    #Plot of ellipse on image
     ax[1].imshow(img)
+    ax[1].plot(eye[:,0], eye[:,1], 'o', color = "red")
+    ax[1].plot(pupil[:,0], pupil[:,1], 'o', color = "blue")
+    #Plot of ellipse on image
+    ax[2].imshow(img)
     if ellipse:
-        ellipse.plot(ax[1],color='blue')
-    fittedeye.plot(ax[1])
-    #plot of ellipse alone
+        ellipse.plot(ax[2],color='blue')
     fittedeye.plot(ax[2])
+    #plot of ellipse alone
+    fittedeye.plot(ax[3])
     if ellipse:
-        ellipse.plot(ax[2])
-    ax[2].set_xlim(ax[1].get_xlim())
-    ax[2].set_ylim(ax[1].get_ylim())
+        ellipse.plot(ax[3])
+    ax[3].set_xlim(ax[1].get_xlim())
+    ax[3].set_ylim(ax[1].get_ylim())
+    ax[3].set_aspect(ax[2].get_aspect())
+    for a in ax:
+        a.set_xticks([]); a.set_yticks([])
     fig.show()
  
 def get_plot_of_extracted_eye(row, fig = None, ax = None, artists = None):
@@ -559,11 +567,10 @@ def get_pupil_size_at_each_eyecam_frame(h5_path):
 
 
 if __name__=="__main__":
-    im = unit_test_data(
-        "C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/labeled-data/2017-03-30_01_CFEB045_eye/CollectedData_viviani.csv")
+    # im = unit_test_data(
+    #     "C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/labeled-data/2017-03-30_01_CFEB045_eye/CollectedData_viviani.csv")
     
     # res = get_pupil_size_over_time("C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/videos/"+
     #                                "2016-05-28_02_CFEB014_eyeDLC_resnet50_micepupilsJul9shuffle1_1030000.h5")
-    # res_outlier_removed = reject_outliers(res)
-    # plt.plot(np.array(list(range(len(res_outlier_removed))))/30,res_outlier_removed)
-    # plt.show()
+    create_video(r"C:\Users\viviani\Desktop\micepupils-viviani-2020-07-09\videos\2017-03-30_01_CFEB045_eyeDLC_resnet50_micepupilsJul9shuffle1_1030000.h5",
+                 "C:/Users/viviani/Desktop/pupiltracking",n=None)

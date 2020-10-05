@@ -32,7 +32,7 @@ from accdatatools.Observations.recordings import Recording
 
 class SparseTrial:
     '''
-    A trial object without the informations from the various datastreams,
+    A trial object without the information from the various datastreams,
     containing only the trial's attributes. Neglects information about the
     dF/F of neurons, licking information, and pupil activity that occured
     during the trial.
@@ -255,7 +255,8 @@ def _get_trial_structs(psychstim_path):
     return trials
 
 def get_trials_in_recording(exp_path, return_se=False, ignore_dprime=False,
-                            se = None, suppress_dprime_error=False):
+                            se = None, suppress_dprime_error=False,
+                            use_sparse = False):
     '''
     Retrieve all the trials in a recording as Trial objects
 
@@ -285,16 +286,20 @@ def get_trials_in_recording(exp_path, return_se=False, ignore_dprime=False,
                                       [s for s in files if 'psychstim.mat' in s]))
     trials = []
     if calc_d_prime(psychstim_path)>1 or ignore_dprime:
-        if se==None:
+        if se==None and not use_sparse:
             se      = Recording(exp_path)
         #We need the total number of frames:
-        nframes = se.ops["nframes"]
-        times   = get_neural_frame_times(timeline_path,nframes)
         structs = _get_trial_structs(psychstim_path)
-        licks = get_lick_state_by_frame(timeline_path, times)
+        if not use_sparse:
+            nframes = se.ops["nframes"]
+            times   = get_neural_frame_times(timeline_path,nframes)
+            licks = get_lick_state_by_frame(timeline_path, times)
         
         for struct in structs:
-            trial = Trial(exp_path,struct,se,times, licks)
+            if use_sparse:
+                trial = SparseTrial(struct,tolerant=False)
+            else:
+                trial = Trial(exp_path,struct,se,times, licks)
             trials.append(trial)
         return trials if not return_se else (trials,se)
     elif suppress_dprime_error:
@@ -308,11 +313,19 @@ def add_trials_in_rec_to_file(filestream, exp_path):
 
 
 def dump_all_trials_in_dataset_to_pkl_file(drive = 'E:\\',
-                                           path = "all_one_plane_trials.pkl"):
+                                           path = "all_one_plane_trials.pkl",
+                                           cls=None):
     all_trials = open("all_one_plane_trials.pkl",'wb')
     add_trials_to_file = (lambda exp_path:
                               add_trials_in_rec_to_file(
                                   all_trials, exp_path))
     apply_to_all_one_plane_recordings(drive,add_trials_to_file)
     all_trials.close()
+
+if __name__=="__main__":
+    from accdatatools.Utils.map_across_dataset import apply_to_all_recordings_of_class
+    ls = []
+    func = lambda pth : ls.append(get_trials_in_recording(pth,
+                                                          use_sparse=True))
+    apply_to_all_recordings_of_class("both_sides_high_contrast","H:\\",func)
 

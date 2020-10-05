@@ -57,7 +57,7 @@ class EyeVideoSyncFigure:
         
         self.all_axes = axes.flatten()
         
-        self.frame_times = get_eyecam_frame_times(matlab_timeline_file, dlc_h5_file)
+        self.frame_times = get_eyecam_frame_times(matlab_timeline_file)
         self.pupil_sizes = get_pupil_size_at_each_eyecam_frame(dlc_h5_file)
         self.frame_times = self.frame_times[:self.pupil_sizes.shape[0]]
         self.licks = get_lick_state_by_frame(matlab_timeline_file, self.frame_times)
@@ -185,7 +185,7 @@ class EyeVideoSyncFigure:
                 self.pupilsize_axis.set_ylim([-100,100])
                 self.pupilsize_axis.set_aspect('equal', adjustable = 'box')
                 if pupil_size != np.nan:
-                    radius = (pupil_size/np.pi)**0.5
+                    radius = 5*(pupil_size/np.pi)**0.5
                     pupil_image = plt.Circle((0,0),radius,
                                              color = "black")
                     self.pupilsize_axis.add_artist(pupil_image)
@@ -234,11 +234,11 @@ class EyeVideoSyncFigure:
                 bodyframe.set_data(behav_frame)
                 self.behavvid_axis.draw_artist(bodyframe)
 
-                pupil_image.set_radius((pupil_size/np.pi)**0.5)
+                pupil_image.set_radius(5*(pupil_size/np.pi)**0.5)
                 self.pupilsize_axis.draw_artist(pupil_image)
                 
-                licktext.set_text("Lick! :D" if is_licking else "")
-                licktext.set_color("green" if is_licking else "red")
+                licktext.set_text("Lick" if is_licking else "")
+                licktext.set_color("black" if is_licking else "red")
                 self.lick_axis.draw_artist(licktext)
                 if trial != None:
                     trial_text.set_text(("Left\n" if trial.isleft else "Right\n") + 
@@ -293,11 +293,11 @@ def video_from_dir_of_frames(dirpath):
         os.system(
           "C:\\Users\\viviani\\ffmpeg\\bin\\.\\ffmpeg.exe -r 20 -f image2 -i"+
           f" {dirpath}\\%d.png -vcodec libx264 -crf 25  -pix_fmt yuv420p"+
-          f" {dirpath}.gif")
+          f" {dirpath}.mp4")
         
 if __name__=="__main__":
     eyecam_video_file = ("C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/videos/"+
-                         "2016-10-07_03_CFEB027_eye.mp4")
+                          "2016-10-07_03_CFEB027_eye.mp4")
     behav_video_file  = "H:/Local_Repository/CFEB027/2016-10-07_03_CFEB027/2016-10-07_03_CFEB027_behav.mp4"
     timeline_file     = "H:/Local_Repository/CFEB027/2016-10-07_03_CFEB027/2016-10-07_03_CFEB027_Timeline.mat"
     exp_path          = "H:/Local_Repository/CFEB027/2016-10-07_03_CFEB027"

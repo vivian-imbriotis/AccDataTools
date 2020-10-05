@@ -19,6 +19,9 @@ from accdatatools.ProcessPupil.size import labelcsv_as_dataframe
 from scipy.spatial.distance import directed_hausdorff
 
 sns.set_style("darkgrid")
+plt.rcParams["font.family"] = 'Times New Roman'
+plt.rcParams["font.size"] = 11
+
 
 class ModifiedFittedEllipse(FittedEllipse):
     def __init__(self, n, pupil):
@@ -37,7 +40,7 @@ def hausdorff(ellipse1, ellipse2):
 
     Returns
     -------
-    distance : int
+    distance : float
 
     '''
     distance = directed_hausdorff(ellipse1.points, ellipse2.points)
@@ -72,7 +75,7 @@ class SingleFrameFigure:
         xy = row[1:].reshape(-1,2).astype(float)
         pupil = xy[:-4]
         eye = xy[-4:]
-        self.fig,ax_rows = plt.subplots(ncols = 3, nrows = 4, figsize = (8,7),
+        self.fig,ax_rows = plt.subplots(ncols = 3, nrows = 4, figsize = (8,8),
                                    constrained_layout=True)
         for n_points_to_consider, ax in zip(range(8,4,-1),ax_rows):
             ellipses = []
@@ -111,142 +114,11 @@ class SingleFrameFigure:
         ax_rows[0][2].set_title("Algorithm's prediction")
     def show(self):
         self.fig.show()
-    
 
-# def least_squares_trend_for_one_frame(row, plotting = True):
-#     if row.isnull().values.any():
-#         raise ValueError("Row must have all 8 eye points placed!")
-#     row = row.to_numpy().reshape(-1)
-#     path = row[0]
-#     _,file = os.path.split(path)
-#     xy = row[1:].reshape(-1,2).astype(float)
-#     pupil = xy[:-4]
-#     eye = xy[-4:]
-#     error_arrays = []
-#     for n_points_to_consider in range(8,4,-1):
-#         ellipses = []
-#         for pupil_mod in combinations(pupil,n_points_to_consider):
-#             try:
-#                 ellipses.append(
-#                     ModifiedFittedEllipse(n_points_to_consider,pupil_mod)
-#                     )
-#             except:
-#                 pass
-#         errors = np.array([(n_points_to_consider,x.get_mean_squared_error(pupil)) for x in ellipses])
-#         error_arrays.append(errors)
-#     errors = np.concatenate(error_arrays)
-#     if plotting:
-#         fig,ax = plt.subplots()
-#         violin = ax.violinplot([i[:,1] for i in error_arrays],[8,7,6,5],showmeans=True)
-#         violin["bodies"][0].set_label("Probability Density")
-#         violin["cmeans"].set_color("black")
-#         violin["cmeans"].set_label("Mean")
-#         violin["cmins"].set_label("Minima and maxima")
-#         ax.set_xticks([8,7,6,5])
-#         ax.set_xlim((8.5,4.5));
-#         ax.set_xlabel("Points considered in fitting ellipse")
-#         ax.set_ylabel("Root Mean Squared Error from full set of 8 points (pixels)")
-#         ax.legend(loc = 'upper left')
-#         ax.set_ylim((0,ax.get_ylim()[1]))
-#         fig.show()
-#     return errors
-
-# def least_squares_figure(path):
-#     folder,_ = os.path.split(path)
-#     df = labelcsv_as_dataframe(path)
-#     errors = []
-#     for idx,row in df.iterrows():
-#         try:
-#             errors.append(least_squares_trend_for_one_frame(row, False))
-#         except: pass
-#     errors = np.concatenate(errors) #get as a flat 2d np array
-#     error_arrays = [errors[errors[:,0]==n][:,1] for n in range(8,4,-1)]
-#     fig,ax = plt.subplots()
-#     violin = ax.violinplot(error_arrays,[8,7,6,5],showmeans=True)
-#     violin["bodies"][0].set_label("Probability Density")
-#     violin["cmeans"].set_color("black")
-#     violin["cmeans"].set_label("Mean")
-#     violin["cmins"].set_label("Minima and maxima")
-#     #ax.plot(distances[:,0],distances[:,1],'o', markersize=4, label = 'Ellipse from random permutation of points');
-#     # ax.plot([8,7,6,5],[np.mean(i) for i in distance_arrays],
-#     #          label='Mean',
-#     #          color = 'black')
-#     ax.set_xticks([8,7,6,5])
-#     ax.set_xlim((8.5,4.5));
-#     ax.set_xlabel("Points considered in fitting ellipse")
-#     ax.set_ylabel("Root Mean Square Error from all 8 points (pixels)")
-#     ax.legend(loc='upper left')
-#     fig.show()
-#     return errors
-
-# def hausdorff_trend_for_one_frame(row, plotting = True):
-#     if row.isnull().values.any():
-#         raise ValueError("Row must have all 8 eye points placed!")
-#     row = row.to_numpy().reshape(-1)
-#     path = row[0]
-#     _,file = os.path.split(path)
-#     xy = row[1:].reshape(-1,2).astype(float)
-#     pupil = xy[:-4]
-#     eye = xy[-4:]
-#     master_ellipse = FittedEllipse(pupil)
-#     distance_arrays = []
-#     for n_points_to_consider in range(8,4,-1):
-#         ellipses = []
-#         for pupil_mod in combinations(pupil,n_points_to_consider):
-#             try:
-#                 ellipses.append(
-#                     ModifiedFittedEllipse(n_points_to_consider,pupil_mod)
-#                     )
-#             except:
-#                 pass
-#         distances = np.array([(n_points_to_consider,hausdorff(master_ellipse, x)[0]) for x in ellipses])
-#         distance_arrays.append(distances)
-#     distances = np.concatenate(distance_arrays)
-#     if plotting:
-#         plt.violinplot([i[:,1] for i in distance_arrays],[8,7,6,5],showmeans=True)
-#         plt.plot(distances[:,0],distances[:,1],'o', markersize=4, label = 'Single ellipse from random combination of points');
-#         plt.plot([8,7,6,5],[np.mean(i[:,1]) for i in distance_arrays],
-#                  label='Mean',
-#                  color = 'black')
-#         plt.xticks([8,7,6,5])
-#         plt.xlim((8.5,4.5));
-#         plt.xlabel("Points considered in fitting ellipse")
-#         plt.ylabel("Hausdorff Distance to 8-point fitted ellipse")
-#         plt.legend()
-#         plt.show()
-#     return distances
-
-# def hausdorff_trend_figure(path):
-#     folder,_ = os.path.split(path)
-#     df = labelcsv_as_dataframe(path)
-#     distances = []
-#     for idx,row in df.iterrows():
-#         try:
-#             distances.append(hausdorff_trend_for_one_frame(row, False))
-#         except: pass
-#     distances = np.concatenate(distances) #get as a flat 2d np array
-#     distance_arrays = [distances[distances[:,0]==n][:,1] for n in range(8,4,-1)]
-#     fig,ax = plt.subplots()
-#     violin = ax.violinplot(distance_arrays,[8,7,6,5],showmeans=True)
-#     violin["bodies"][0].set_label("Probability Density")
-#     violin["cmeans"].set_color("black")
-#     violin["cmeans"].set_label("Mean")
-#     violin["cmins"].set_label("Minima and maxima")
-#     #ax.plot(distances[:,0],distances[:,1],'o', markersize=4, label = 'Ellipse from random permutation of points');
-#     # ax.plot([8,7,6,5],[np.mean(i) for i in distance_arrays],
-#     #          label='Mean',
-#     #          color = 'black')
-#     ax.set_xticks([8,7,6,5])
-#     ax.set_xlim((8.5,4.5));
-#     ax.set_xlabel("Points considered in fitting ellipse")
-#     ax.set_ylabel("Hausdorff Distance to 8-point fitted ellipse")
-#     ax.legend(loc='upper left')
-#     fig.show()
-#     return distances
     
 class LeastSquaresAndHausdorffEllipseFigure:
     def __init__(self,path):
-        self.fig, ax = plt.subplots(figsize=(8,5),ncols = 2)
+        self.fig, ax = plt.subplots(figsize=(12,5),ncols = 2)
         self.draw_lst_squs_plot(ax[0],path)
         self.draw_hausdorff_plot(ax[1],path)
     def draw_lst_squs_plot(self,ax,path):
@@ -255,7 +127,7 @@ class LeastSquaresAndHausdorffEllipseFigure:
         errors = []
         for idx,row in df.iterrows():
             try:
-                errors.append(least_squares_trend_for_one_frame(row, False))
+                errors.append(self.least_squares_trend_for_one_frame(row, False))
             except: pass
         errors = np.concatenate(errors) #get as a flat 2d np array
         error_arrays = [errors[errors[:,0]==n][:,1] for n in range(8,4,-1)]
@@ -275,7 +147,7 @@ class LeastSquaresAndHausdorffEllipseFigure:
         distances = []
         for idx,row in df.iterrows():
             try:
-                distances.append(hausdorff_trend_for_one_frame(row, False))
+                distances.append(self.hausdorff_trend_for_one_frame(row, False))
             except: pass
         distances = np.concatenate(distances) #get as a flat 2d np array
         distance_arrays = [distances[distances[:,0]==n][:,1] for n in range(8,4,-1)]
@@ -370,7 +242,11 @@ class LeastSquaresAndHausdorffEllipseFigure:
 
  
 if __name__=="__main__":
-    im = hausdorff_trend_figure(
+    plt.close('all')
+    im = LeastSquaresAndHausdorffEllipseFigure(
         "C:/Users/viviani/Desktop/micepupils-viviani-2020-07-09/labeled-data/2017-03-30_01_CFEB045_eye/CollectedData_viviani.csv",
-        )
+        ).show()
+    im2 = SingleFrameFigure(
+        r"C:\Users\viviani\Desktop\micepupils-viviani-2020-07-09\labeled-data\2017-03-30_01_CFEB045_eye\CollectedData_viviani.csv"
+        ).show()
     

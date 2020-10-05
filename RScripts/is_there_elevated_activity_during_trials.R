@@ -28,3 +28,4 @@ for (i in 1:n){
 model_pvals_a <- p.adjust(model_pvals,'fdr')
 sig_model_estimates <- model_estimates[model_pvals_a<0.05]
 sum(sig_model_estimates>0)/length(sig_model_estimates)
+write.csv(data.frame(model_estimates,model_pvals_a),"during_trials.csv")
