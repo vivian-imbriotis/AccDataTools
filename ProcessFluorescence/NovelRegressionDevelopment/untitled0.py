@@ -20,7 +20,7 @@ def make_data(n_points = 10000):
     data["frame_n"] = np.arange(0, n_points)
     data["ground_truth"] = spikes
     data["bg"] = bg
-    data["slope"] = np.random.random()+0.5
+    data["slope"] = np.random.random() + 0.5
     data["raw"] = data["ground_truth"] + data["slope"]*bg
     return data
 

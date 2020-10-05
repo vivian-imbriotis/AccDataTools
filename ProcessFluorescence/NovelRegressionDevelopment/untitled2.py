@@ -140,7 +140,7 @@ def plot_data():
 
     ax[2][1].plot(data["ground_truth"], data["RR_df_on_f"], 'o')
     ax[2][1].plot(data["ground_truth"], data["ground_truth"], label= 'Unity')
-    ax[2][1].set_title("MeanSquareError = " + str(calc_error(data)))
+    ax[2][1].set_title("MeanSquareError = " + str(calc_error(data,df=True)))
     ax[2][1].set_xlabel("Ground Truth")
     ax[2][1].set_ylabel("Robust Regression Aproach")
     ax[2][1].legend(loc='upper left')
@@ -404,7 +404,4 @@ def run_simulation():
 
 # plot_data_creation_process()
 if __name__=="__main__":
-    dic = run_simulation()
-    import pandas as pd
-    df = pd.DataFrame(dic)
-    df.to_csv("C:/Users/Vivian Imbriotis/Desktop/bg_subtract_testing.csv")
+    plot_data()
