@@ -38,7 +38,7 @@ def get_error(training_data_file,  machine_results_file, certainty_cutoff=0.3):
                              pcutoff = certainty_cutoff)[1]
 
 if __name__=="__main__":
-    os.chdir("C:/Users/viviani/Desktop/testing_dataset_factory-viviani-2020-07-27/labeled-data/2017-02-08_01_CFEB040_eye")
+    os.chdir(r"C:\Users\viviani\Desktop\DLC_testing_data")
     error = get_error(
         "CollectedData_viviani.h5",
         "2017-02-08_01_CFEB040_eyeDLC_resnet50_micepupilsJul9shuffle1_1030000.h5"

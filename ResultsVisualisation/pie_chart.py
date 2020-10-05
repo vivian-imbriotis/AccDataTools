@@ -164,7 +164,6 @@ class CollapsedModelPieChartAnovaFigure:
         right_ax[-1].set_xlabel("F value" if mode=='f' else "Partial $\eta^2$")
         for a in right_ax[:-1]: a.set_xticklabels([])
         
-        
         #Now to build the pie chart
         #We have a lot of possible combinations of significant variables, so
         #we need to group all the ones that were only significant in a small
@@ -492,30 +491,3 @@ if __name__=="__main__":
     MeanChangeInFluorescenceDuringTrials(
         pd.read_csv("../RScripts/during_trials.csv").model_estimates.values
         ).show()
-    # CollapsedModelPValuesFigure(df1).show()
-    # CollapsedModelPValuesFigure(df2).show()
-    # CollapsedModelPValuesFigure(df3).show()
-    # CollapsedModelPieChartAnovaFigure(df1,'left_only','eta').show()
-    # CollapsedModelPieChartAnovaFigure(df2,'both_sides','eta').show()
-    # CollapsedModelPieChartAnovaFigure(df3,'low_contrast','eta').show()
-    # CollapsedModelCoefficientEstimatesFigure(df1).show()
-    # CollapsedModelCoefficientEstimatesFigure(df2).show()
-    # CollapsedModelCoefficientEstimatesFigure(df3).show()  
-    # SubtypedROIsWithSignificantTrialResponseFigure(df1).show()
-    # SubtypedROIsWithSignificantTrialResponseFigure(df2).show()
-    # SubtypedROIsWithSignificantTrialResponseFigure(df3).show()
-    # TrialKernelFigure(df4).show()
-    # LickingModelFigure(df1).show()
-    # plt.ioff()
-    # fig = LickingModelFigure(df1)
-    # fig.save("high_contrast_licking_pca")
-    # while True:
-    #     try:
-    #         LickingModelFigure(df1).save("unilat_highcon_licking")
-    #         LickingModelFigure(df2).save("bilat_highcon_licking_pca")
-    #         LickingModelFigure(df3).save("lowcon_licking_pca")
-    #         break
-    #     except ValueError:
-    #         pass
-
-
