@@ -137,3 +137,6 @@ dmypy.json
 #CUSTOM ADDITION: ignore all .csv datasets, they can be generated from code
 #and are too big to reasonably have in commit history
 *.csv
+
+#AND ignore all .Rhistory files
+RScripts/.Rhistory
