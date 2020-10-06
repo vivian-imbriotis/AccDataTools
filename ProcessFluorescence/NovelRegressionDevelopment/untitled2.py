@@ -15,12 +15,10 @@ from sklearn.linear_model import TheilSenRegressor, HuberRegressor
 from df_on_f_novel_regression_scratchpad import underline_regression
 import seaborn as sns
 
-###SETTINGS###
+sns.set_style("darkgrid")
+plt.rcParams["font.family"] = 'Times New Roman'
+plt.rcParams["font.size"] = 11
 
-
-
-
-sns.set_style("dark")
 
 def make_data(n_points = 10000):
     spikes = make_spikes(n_points)
@@ -55,7 +53,7 @@ def make_kernel(tau = 10):
 #Just plotting and helper functions below
 
 
-def plot_data_creation_process(colors = plt.rcParams['axes.prop_cycle'].by_key()['color']):
+def plot_data_creation_process(colors = sns.color_palette()):
     data = make_data(1000)
     data = proc_data(data)
     
@@ -63,7 +61,7 @@ def plot_data_creation_process(colors = plt.rcParams['axes.prop_cycle'].by_key()
     nrows = 5
     ncols = 2
     fig, big_axes = plt.subplots(nrows = nrows, ncols = 1,tight_layout= True,
-                           figsize = (8,9))
+                           figsize = (12,9))
     for row, big_ax in enumerate(big_axes, start=1):
         big_ax.axis("off")
         big_ax._frameon = False
@@ -73,7 +71,7 @@ def plot_data_creation_process(colors = plt.rcParams['axes.prop_cycle'].by_key()
         ax[row][1] = fig.add_subplot(len(big_axes),ncols,ncols*row+2)
     
     for axis in ax.flatten():
-        axis.set_xticks([])
+        axis.set_xticklabels([])
         
 
     for axis in ax[2:,0]:
@@ -106,6 +104,63 @@ def plot_data_creation_process(colors = plt.rcParams['axes.prop_cycle'].by_key()
     ax[4][0].plot(data["bg"],data["raw"], 'o')
     ax[4][0].plot(data["bg"], data["PR_theta"][0] + data["PR_theta"][1]*data["bg"], label = 'Robust Regression')
     ax[4][1].plot(data["frame_n"],get_df_on_f0(data["raw"]-data["PR_theta"][1]*data["bg"]))
+    
+    
+    for axis in ax[0:2,:].flatten():
+        axis.set_ylim((-0.5,None))
+    fig.show()
+
+def plot_data_creation_process(colors = sns.color_palette()):
+    data = make_data(1000)
+    data = proc_data(data)
+    
+    #construct plot layout with row titles:
+    nrows = 3
+    ncols = 2
+    fig, big_axes = plt.subplots(nrows = nrows, ncols = 1,tight_layout= True,
+                           figsize = (10,12))
+    for row, big_ax in enumerate(big_axes, start=1):
+        big_ax.axis("off")
+        big_ax._frameon = False
+    ax = np.empty((len(big_axes),ncols),dtype=object)
+    for row in range(len(big_axes)):
+        ax[row][0] = fig.add_subplot(len(big_axes),ncols,ncols*row+1)
+        ax[row][1] = fig.add_subplot(len(big_axes),ncols,ncols*row+2)
+    
+    for idx, axis in enumerate(ax.flatten()):
+        axis.set_xticklabels([])
+        if idx!=4:
+            axis.set_xlabel("Time")
+        if idx in (0,2,3,5):
+            axis.set_ylabel("Fluorescence (AU)")
+        elif idx==1:
+            axis.set_ylabel("Fluorescence ($\Delta$F/F0 units)")
+        
+    for axis in ax[2:,0]:
+        axis.set_yticks([])
+        axis.set_xlabel("Neuropil Fluorescence")
+        axis.set_ylabel("Measured Fluorescence")
+    
+    big_axes[0].set_title("$\\bf{(A)}$ Ground Truth\n\n")
+    ax[0][0].set_title("True Cell Fluorescence")
+    ax[0][0].plot(data["frame_n"], data["ground_truth"])
+    ax[0][1].set_title("True cell $\\Delta$F/F0")
+    ax[0][1].plot(data["frame_n"], data["gt_df_on_f"])
+    
+    big_axes[1].set_title("$\\bf{(B)}$ Background Contamination\n\n")
+    ax[1][0].set_title("Neuropil Fluorescence")
+    ax[1][0].plot(data["frame_n"], data["bg"])
+    ax[1][1].set_title("Measured Cell Fluorescence\n(Cell Fluorecence + $\\beta\\times$Neuropil Fluorescence + $\\epsilon$)")
+    ax[1][1].plot(data["frame_n"], data["raw"])
+    
+    
+    big_axes[2].set_title("$\\bf{(C)}$ Neuropil Subtraction with Underline Regression\n\n")
+    ax[2][0].set_title("    Underline Regression used to infer...")
+    ax[2][0].plot(data["bg"],data["raw"], 'o')
+    ax[2][0].plot(data["bg"], data["H_theta"][0] + data["H_theta"][1]*data["bg"])
+    ax[2][1].set_title("...an estimation of true cell fluorescence")
+    ax[2][1].plot(data["frame_n"],(data["raw"]-data["H_theta"][1]*data["bg"]))
+    
     
     
     for axis in ax[0:2,:].flatten():
@@ -404,4 +459,4 @@ def run_simulation():
 
 # plot_data_creation_process()
 if __name__=="__main__":
-    plot_data()
+    plot_data_creation_process()

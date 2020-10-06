@@ -49,6 +49,9 @@ class LossDueToResidualFigure:
         self.fig.show()
     def save(self,name):
         self.anim.save(f'{name}.gif', writer=PillowWriter(fps=5))
+
+class MockDataCreationPipelineFigure:
+    pass
         
 if __name__=="__main__":
     plt.close('all')
