@@ -28,6 +28,7 @@ plt.rcParams["font.size"] = 11
 class LickingSubtractionValidationFigure:
     nrows = 5
     nplots = 8
+        
     def __init__(self, df, state = np):
         #select a random ROI
         roi = df.sample(random_state=state).ROI_ID.values[0]
@@ -143,15 +144,86 @@ class LickingSubtractionValidationFigure:
             a.legend(loc="upper right")
             a.set_xticklabels([])
         ax[3].set_ylabel("")
+        for a,char in zip(ax,"ABCDEFGE"):
+            a.set_title("$\\bf{(" + f"{char}" +")}$", loc="right")
+        fig.show()
+        
+#This should probably inherit from the previous figure and just
+#overrive the __init__ method
+class LickingSubtractionThenCollapsingWorkflow:
+    npoints = 750
+    def __init__(self,df,state=0):
+        fig,ax = plt.subplots(nrows = 5, figsize = (10,11), tight_layout=True)
+        roi = df.sample(random_state=state).ROI_ID.values[0]
+        df  = df[df.ROI_ID == roi]
+        df_on_f = df.dF_on_F.values[:self.npoints]
+        x = np.linspace(0,len(df_on_f)//5, len(df_on_f))
+        nontrial_idxs = pd.isnull(df.Trial_ID.values)[:self.npoints]
+        trial_idxs = ~nontrial_idxs
+        trial_starts, = np.array(np.where(rising_edges(trial_idxs,cutoff=0.5)))//5
+        trial_ends,   = np.array(np.where(falling_edges(trial_idxs,cutoff=0.5)))//5
+        dff_trial = df_on_f.copy(); dff_trial[nontrial_idxs]=np.nan
+        dff_nontrial = df_on_f.copy(); dff_nontrial[trial_idxs]=np.nan
+        ax[0].plot(x,dff_trial,color=sns.color_palette('bright')[0],
+                   label="Fluorescence during trials")
+        ax[0].plot(x,dff_nontrial, color=sns.color_palette()[1], 
+                   label = "Fluorescnece outside trials")
+        ymax,ymin = ax[0].get_ylim()
+        for start,end in zip(trial_starts,trial_ends):
+            xy = (start,ymin)
+            width = end-start
+            height = ymax - ymin
+            patch = Rectangle(xy,width,height, alpha=0.6)
+            ax[0].add_patch(patch)
+        r.globalenv["dff"]    = r.FloatVector(dff_nontrial)
+        r.globalenv["licking"]= r.FloatVector(df.lick_factor[:self.npoints].values)
+        r.r("nontrial   <- data.frame(dff,licking)")
+        r.globalenv["dff"]    = r.FloatVector(dff_trial)
+        r.globalenv["licking"]= r.FloatVector(df.lick_factor[:self.npoints].values)
+        r.r("trial <- data.frame(dff,licking)")
+        r.r("model <- lm(dff~as.factor(licking),na.action=na.omit,dat=nontrial)")
+        r.r("preds <- predict(model,trial)")
+        patch.set_label("Trials")
+        ax[1].plot(x,dff_nontrial, color = sns.color_palette()[1],label="Fluorescence outside trials")
+        ax[1].plot(x,np.array(r.r.preds),color=sns.color_palette()[3], 
+                   label="Fitted licking model")
+        ax[2].plot(x,dff_trial,color=sns.color_palette('bright')[0])
+        ax[2].plot(x,np.array(r.r.preds),color=sns.color_palette()[3],
+                    label = "Model predictions")
+        ax[3].plot(x,(dff_trial-np.array(r.r.preds)),
+                   color = sns.color_palette('bright')[0],
+                   label = "Licking-corrected trial fluorescence")
+        for start,end in zip(trial_starts,trial_ends):
+            xy = (start,ymin)
+            width = end-start
+            height = ymax - ymin
+            patch1 = Rectangle(xy,width,height, alpha=0.3)
+            patch2 = Rectangle(xy,width,height, alpha=0.3)
+            ax[3].add_patch(patch1)
+            ax[4].add_patch(patch2)
+        trials = dff_trial[~np.isnan(dff_trial)].reshape(-1,25)
+        tone = trials[:,:5].mean(axis=-1)
+        stim = trials[:,5:15].mean(axis=-1)
+        resp = trials[:,15:25].mean(axis=-1)
+        tone_idxs = trial_starts + 0.5
+        stim_idxs = trial_starts + 2
+        resp_idxs = trial_starts + 4
+        for x1,x2,x3,y1,y2,y3 in zip(tone_idxs,stim_idxs,resp_idxs,tone,stim,resp):
+            ax[4].plot((x1,x2,x3),(y1,y2,y3),color='k',marker='o',
+                       label = "Collapsed data" if x1==tone_idxs[0] else "")
+        for a in ax[:-1]: a.set_xticklabels([])
+        for a in ax: a.set_xlim(ax[0].get_xlim()); a.legend(loc='upper right')
+        for a,char in zip(ax,"ABCDEFG"):
+            a.set_title("$\\bf{(" + f"{char}" +")}$", loc="right")
+        ax[2].set_ylabel("Fluorescence ($\Delta$F/F0 units)")
+        ax[-1].set_xlabel("Time (s)")
         fig.show()
         
         
         
 
-        
-
 if __name__=="__main__":
     plt.close('all')
     df = pd.read_csv(r"C:\Users\viviani\Desktop\single_experiments_for_testing\2016-11-01_03_CFEB027.csv")
-    i=1
-    LickingSubtractionValidationFigure(df,i)
+    LickingSubtractionValidationFigure(df,19)
+    LickingSubtractionThenCollapsingWorkflow(df,5)
