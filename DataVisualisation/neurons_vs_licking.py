@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr
 import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
 import seaborn as sns
 
 import rpy2.robjects as R
@@ -32,7 +33,7 @@ class LickingCorrelationHistogram:
         pearsons_rs = np.zeros(rois.shape)
         pearsons_pvals = np.zeros(rois.shape)
         for idx,roi in enumerate(rois):
-            logged_df = nontrial[nontrial.ROI_ID==roi].logged_df
+            logged_df = nontrial[nontrial.ROI_ID==roi].logged_dF
             licking   = nontrial[nontrial.ROI_ID==roi].lick_factor==0
             r,p = pearsonr(logged_df,licking)
             pearsons_rs[idx]   = r
@@ -47,14 +48,27 @@ class LickingCorrelationHistogram:
         ns_min, ns_max = np.min(not_significant), np.max(not_significant)
         ns_num_bins = int(40 * (ns_max-ns_min)/(s_max-s_min))
         step = (ns_max-ns_min)/ns_num_bins
-        ax.hist(not_significant, bins = np.linspace(ns_min,
-                                                    ns_max,
-                                                    ns_num_bins),
-                color=self.grey)
-        ax.hist(upper_significant, bins = np.arange(ns_max,s_max,step),
-                color=self.blue)
-        ax.hist(lower_significant, bins = np.arange(s_min,ns_min,step),
-                color=self.red)
+        ns_bin_boundaries = np.linspace(ns_min,
+                                        ns_max,
+                                        ns_num_bins)
+        us_bin_boundaries = np.arange(ns_max,s_max,step)
+        ls_bin_boundaries = np.arange(ns_min,s_min,-1*step)[::-1]
+        ax.hist(not_significant, bins = ns_bin_boundaries,
+                color=self.grey,
+                label = "Not significant",
+                weights = np.ones(len(not_significant))/len(pearsons_rs))
+        ax.hist(upper_significant, bins = us_bin_boundaries,
+                color=self.blue,
+                label = "Positiviely correlated (p<0.05)",
+                weights = np.ones(len(upper_significant))/len(pearsons_rs))
+        ax.hist(lower_significant, bins = ls_bin_boundaries,
+                color=self.red,
+                label = "Negatively correlated (p<0.05)",
+                weights = np.ones(len(lower_significant))/len(pearsons_rs))
+        ax.legend(loc="upper right")
+        ax.set_ylabel("Proportion of ROIs")
+        ax.set_xlabel("Correlation between licking and fluorescence (Pearson's R)")
+        ax.yaxis.set_major_formatter(PercentFormatter(1))
         fig.show()
         
 if __name__=="__main__":
