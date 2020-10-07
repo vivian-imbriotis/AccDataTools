@@ -26,7 +26,7 @@ from accdatatools.Timing.synchronisation import (get_neural_frame_times,
 
 class RecordingUnroller(Recording):
     def __init__(self,exp_path,ignore_dprime=False, tolerate_lack_of_eye_video = False,
-                 ignore_eye_video=False):
+                 ignore_eye_video=False, tolerate_frametime_discrepancies = True):
         self.exp_path = exp_path
         super().__init__(exp_path)
         self.trials = get_trials_in_recording(exp_path, 
@@ -38,15 +38,23 @@ class RecordingUnroller(Recording):
                                   item(
                                       [s for s in os.listdir(exp_path) if 'Timeline.mat' in s]))
         
-        self.frame_times = get_neural_frame_times(timeline_path, self.ops["nframes"])
+        try:
+            self.frame_times = get_neural_frame_times(timeline_path, 
+                                                      self.ops["nframes"],
+                                                      tolerant=False)
+        except ValueError as e: 
+            if tolerate_frametime_discrepancies:
+                pass
+            else:
+                raise e
         
-        #Now  we somehow need to get this into a continuous time series.
+        #Now we need to get these all as continuous time series.
         (self.trialtime, self.iscorrect, self.side, self.isgo, self.contrast,
          self.trial_id, self.trial_num, self.peritrialtime, 
          self.trial_component) = self.get_timeseries()
         
         self.licks = get_lick_state_by_frame(timeline_path, self.frame_times)
-        #This licks is the bool series, we want the deltaT series
+        #This licks attr is the bool series, we want the deltaT series
         self.licks = lick_transform(self.licks)
         
         #Need to check if this experiment had a video that was processed
@@ -168,7 +176,8 @@ def get_whole_dataset(drive, cls=None):
     result = []
     def func(path):
         recorder = RecordingUnroller(path, ignore_dprime = True, 
-                                     tolerate_lack_of_eye_video = True)
+                                     tolerate_lack_of_eye_video = True,
+                                     tolerate_frametime_discrepancies=False)
         df = recorder.to_dataframe()
         del recorder
         result.append(df)

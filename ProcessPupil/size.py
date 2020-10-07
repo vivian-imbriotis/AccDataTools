@@ -540,7 +540,7 @@ def create_video(h5_path, file_path, n = None):
     os.rmdir(file_path)
     plt.close('all')
         
-def get_pupil_size_at_each_eyecam_frame(h5_path):
+def get_pupil_size_at_each_eyecam_frame(h5_path, verbose=False):
     df = pd.read_hdf(h5_path)
     results = np.empty(df.shape[0])
     for idx, row in df.iterrows():
@@ -558,7 +558,7 @@ def get_pupil_size_at_each_eyecam_frame(h5_path):
             results[idx] = min(ellipse.axes)
         else:
             results[idx] = np.nan
-        if (idx%1000==0):
+        if (idx%1000==0) and verbose:
             print(f"{idx}/{df.shape[0]}")
     results = reject_outliers(results)
     return results

@@ -11,6 +11,7 @@ import numpy as np
 import seaborn
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+import seaborn as sns
 
 
 from accdatatools.Timing.synchronisation import (get_lick_times,
@@ -22,6 +23,9 @@ from accdatatools.Utils.path import (get_timeline_path,
                                      get_psychstim_path,
                                      get_pupil_hdf_path)
 
+sns.set_style("darkgrid")
+plt.rcParams["font.family"] = 'Times New Roman'
+plt.rcParams["font.size"] = 11
 
 class PupilDiameterLickingFigure:
     @staticmethod
@@ -45,7 +49,6 @@ class PupilDiameterLickingFigure:
         self.render()
         
     def render(self):
-        seaborn.set_style("dark")
         self.fig, ax  = plt.subplots()
         y_val_for_licks = np.full(self.licking_times.shape, 6)
         ax.scatter(self.licking_times,

@@ -15,7 +15,8 @@ from accdatatools.Utils.signal_processing import (rising_edges,
 from accdatatools.ProcessPupil.size import get_pupil_size_at_each_eyecam_frame
 
 
-def get_neural_frame_times(timeline_path, number_of_frames):
+def get_neural_frame_times(timeline_path, number_of_frames,
+                           tolerant = True):
     '''
     Helper function to get the mean time at which each frame in a recording
     was captured.
@@ -26,6 +27,10 @@ def get_neural_frame_times(timeline_path, number_of_frames):
         path to Timeline.mat file in experiment directory.
     number_of_frames : int
         Total number of frames in the recording.
+    tolerant : bool
+        If false, raise ValueError when there is a discrepancy between 
+        timeline.mat records of number of frames, and the number of frames
+        present in the suite2p binary. The default is False.
 
     Raises
     ------
@@ -34,6 +39,11 @@ def get_neural_frame_times(timeline_path, number_of_frames):
         of frames captured before the current tick. This is raised if the 
         counter is either not monotonically increasing, or if it increases
         by more than 1 in a single millisecond clock tick.
+    ValueError
+        This is raised if there is a significant (ie more than 10-frame)
+        discepancy between the timeline.mat recording of frame times and
+        the number of frames actually present in the binaries. ONLY RAISED
+        IF TOLERANT IS SET TO FALSE
 
     Returns
     -------
@@ -48,6 +58,8 @@ def get_neural_frame_times(timeline_path, number_of_frames):
     timestamps = timeline['rawDAQTimestamps']
     frame_times = np.zeros(int(frame_counter[-1]))
     current_frame = 0
+    #Convert the incrementing counter and array of tick times to an array of
+    #frame times
     for timestamp,no_frames in zip(timestamps,frame_counter):
         if no_frames == (current_frame + 1):
             frame_times[current_frame] = timestamp
@@ -55,7 +67,12 @@ def get_neural_frame_times(timeline_path, number_of_frames):
         elif no_frames != current_frame:
             raise IOError('Frame counter in timeline.mat not monotonic')
     #Each suite2p frame is the average of 6 raw frames
-    #extra ticks are extraneous
+    #extra ticks are extraneous, but if there's too many, something has
+    #probably gone wrong!!
+    if not tolerant and (len(frame_times) > number_of_frames*6 + 50):
+        raise ValueError("Intolerant frametime calculator encountered "+
+                         "discrepancy between timeline file and "+
+                         "video binary frames.")
     frame_times = frame_times[:number_of_frames*6]
     try:
         frame_times = frame_times.reshape(number_of_frames, 6)
