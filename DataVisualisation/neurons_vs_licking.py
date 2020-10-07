@@ -32,7 +32,7 @@ class LickingCorrelationHistogram:
         pearsons_rs = np.zeros(rois.shape)
         pearsons_pvals = np.zeros(rois.shape)
         for idx,roi in enumerate(rois):
-            logged_df = nontrial[nontrial.ROI_ID==roi].dF_on_F
+            logged_df = nontrial[nontrial.ROI_ID==roi].logged_df
             licking   = nontrial[nontrial.ROI_ID==roi].lick_factor==0
             r,p = pearsonr(logged_df,licking)
             pearsons_rs[idx]   = r
@@ -45,7 +45,7 @@ class LickingCorrelationHistogram:
         not_significant   = pearsons_rs[adj_pvals>=0.05]
         s_min, s_max = np.min(lower_significant), np.max(upper_significant)
         ns_min, ns_max = np.min(not_significant), np.max(not_significant)
-        ns_num_bins = int(100 * (ns_max-ns_min)/(s_max-s_min))
+        ns_num_bins = int(40 * (ns_max-ns_min)/(s_max-s_min))
         step = (ns_max-ns_min)/ns_num_bins
         ax.hist(not_significant, bins = np.linspace(ns_min,
                                                     ns_max,
