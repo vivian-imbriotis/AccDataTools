@@ -21,11 +21,16 @@ plt.rcParams["font.family"] = 'Times New Roman'
 plt.rcParams["font.size"] = 11
 
 
-class FailedMachineLearningFigureFactory():
+class FailedMachineLearningFigure():
+    colors = sns.color_palette()
+    blue = colors[0]
+    red = colors[3]
     def __init__(self, suite2p_path, iscell_path):
         self.__path = suite2p_path
+        self.iscell = np.load(iscell_path)[:,0].astype(np.bool)
         cwd = os.getcwd()
         os.chdir(suite2p_path)
+        
 
         self.stat = np.load("stat.npy", allow_pickle = True)
         self.ops  = np.load("ops.npy", allow_pickle = True).item()
@@ -38,9 +43,6 @@ class FailedMachineLearningFigureFactory():
         self.Fcorr = np.maximum(self.F - 0.8*self.Fneu,1)
         self.F0 = self.running_min(self.Fcorr, 30, 100)
         self.dF_on_F = np.maximum((self.Fcorr - self.F0) / self.F0,0.01)
-        
-
-        self.iscell = np.load(iscell_path)[:,0].astype(np.bool)
         
         self.vcorr_map = self.ops['Vcorr']
         self.ROIs = self.stat_to_pixels()
@@ -104,36 +106,45 @@ class FailedMachineLearningFigureFactory():
 
 
 
-class PcaPlotFigure(FailedMachineLearningFigureFactory):
-    def __init__(self):
-        super().__init__()
-        self.fig,ax = plt.subplots()
+    def show(self):
+        self.fig,ax = plt.subplots(nrows = 2, tight_layout=True,
+                                   figsize = [5.5,9])
         pca = PCA(n_components = 2)
         res = pca.fit_transform(self.out_prime)
         is_cell = res[self.iscell]
         not_cell = res[np.logical_not(self.iscell)]
-        ax.set_title("PCA of cell statistics for a single trial")
-        ax.scatter(is_cell[:,0],is_cell[:,1],
-                    color = 'green')
-        ax.scatter(not_cell[:,0],not_cell[:,1],
-                    color = 'red')
-    def show(self):
-        self.fig.show()
+        ax[0].set_title("$\\bf{(A)}$",loc="left")
+        ax[0].scatter(is_cell[:,0],is_cell[:,1],
+                    color = self.blue,
+                    label = "Human-labelled Axon")
+        ax[0].scatter(not_cell[:,0],not_cell[:,1],
+                    color = self.red,
+                    label = "Human-labelled Not-Axon")
+        ax[0].legend()
+        ax[0].set_ylabel("Second Principal Component")
+        ax[0].set_xlabel("First Principal Component")
 
-class ConfusionMatrixFigure(FailedMachineLearningFigureFactory):
-    def __init__(self):
-        super().__init__()
         self.classifier = self.produce_classifier()
-    def show(self):
         plot_confusion_matrix(
-                            self.classifier, 
-                            self.out_prime,
-                            self.iscell,
-                            display_labels = [
-                                "Not Bouton",
-                                "Bouton"])
+                self.classifier, 
+                self.out_prime,
+                self.iscell,
+                display_labels = [
+                    "Not Bouton",
+                    "Bouton"],
+                ax = ax[1],
+                cmap = plt.cm.Blues)
+        ax[1].set_title("$\\bf{(B)}$",loc="left")
+        ax[1].set_ylabel("")
+        ax[1].set_xlabel("")
+        self.fig.show()
+        
+
 
 
 if __name__=='__main__':
-    suite2p_path = ""
-    iscell_path  = ""
+    plt.ioff()
+    plt.close('all')
+    suite2p_path = r"D:\Local_Repository\CFEB013\2016-06-29_02_CFEB013\suite2p\plane0"
+    iscell_path  = "manually_labelled_cells_for_2016-06-29_02_CFEB013.npy"
+    FailedMachineLearningFigure(suite2p_path,iscell_path).show()

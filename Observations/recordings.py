@@ -67,6 +67,9 @@ class Recording:
             self.iscell = np.load("iscell.npy")[:,0].astype(np.bool)
             self.iscell = self.iscell[valid_idxs]
             
+            self.skew = np.fromiter((x["skew"] for x in self.stat),
+                                    dtype = np.float32)
+            
             #Merge together highly correlated ROIs
             self.dF_on_F, self.spks,self.iscell = merge_rois(self.dF_on_F,
                                                              self.spks,
@@ -93,7 +96,7 @@ class Recording:
         skew = np.fromiter((x["skew"] for x in self.stat),
                                 dtype = np.float32)
         iscell_neuropil_criterion = F_Fneu_ratio > 1.05
-        iscell_skew_criterion = skew > np.percentile(self.skew,5)
+        iscell_skew_criterion = skew > np.percentile(self.skew,10)
         
         #Both criteria must be met for ROI to be included in analysis
         iscell = np.logical_and(iscell_neuropil_criterion, 
