@@ -21,7 +21,7 @@ plt.rcParams["font.family"] = 'Times New Roman'
 plt.rcParams["font.size"] = 11
 
 
-class FailedMachineLearningFigure():
+class StatisticExtractor():
     colors = sns.color_palette()
     blue = colors[0]
     red = colors[3]
@@ -98,45 +98,48 @@ class FailedMachineLearningFigure():
 
 
         
-    def produce_classifier(self,percent=80):
+    def produce_classifier(self,percent=100, verbose=False):
         classifier = LogisticRegression(verbose=verbose,max_iter=1000)
         classifier.fit(self.out_prime[:len(self.out_prime)*percent//100],
-                       self.iscell)
+                       self.iscell[:len(self.out_prime)*percent//100])
         return classifier
     
 
 
-
-    def show(self):
+class FailedMachineLearningFigure:
+    def __init__(self, suite2p_path_1, iscell_path_1,
+                 suite2p_path_2, iscell_path_2):
+        s1 = StatisticExtractor(suite2p_path_1,iscell_path_1)
+        s2 = StatisticExtractor(suite2p_path_2,iscell_path_2)
         self.fig,ax = plt.subplots(nrows = 2, tight_layout=True,
                                    figsize = [5.5,9])
         pca = PCA(n_components = 2)
-        res = pca.fit_transform(self.out_prime)
-        is_cell = res[self.iscell]
-        not_cell = res[np.logical_not(self.iscell)]
+        res = pca.fit_transform(s1.out_prime)
+        is_cell = res[s1.iscell]
+        not_cell = res[np.logical_not(s1.iscell)]
         ax[0].set_title("$\\bf{(A)}$",loc="left")
         ax[0].scatter(is_cell[:,0],is_cell[:,1],
-                    color = self.blue,
+                    color = s1.blue,
                     label = "Human-labelled Axon")
         ax[0].scatter(not_cell[:,0],not_cell[:,1],
-                    color = self.red,
+                    color = s1.red,
                     label = "Human-labelled Not-Axon")
         ax[0].legend()
         ax[0].set_ylabel("Second Principal Component")
         ax[0].set_xlabel("First Principal Component")
 
-        self.classifier = self.produce_classifier(percent=80)
-        self.testing_data = self.out_prime[len(self.out_prime)*80//100:]
+        self.classifier = s1.produce_classifier(percent=100)
         plot_confusion_matrix(
                 self.classifier, 
-                self.out_prime,
-                self.iscell,
+                s2.out_prime,
+                s2.iscell,
                 display_labels = [
                     "Not Bouton",
                     "Bouton"],
                 ax = ax[1],
                 cmap = plt.cm.Blues)
         ax[1].set_title("$\\bf{(B)}$",loc="left")
+    def show(self):
         self.fig.show()
         
 
