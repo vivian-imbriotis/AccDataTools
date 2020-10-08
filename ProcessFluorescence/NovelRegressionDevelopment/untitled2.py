@@ -28,7 +28,7 @@ def make_data(n_points = 10000):
     data["ground_truth"] = spikes
     data["bg"] = bg
     data["slope"] = np.random.random()+0.5
-    data["raw"] = data["ground_truth"] + data["slope"]*bg + 5*np.random.rand(n_points)
+    data["raw"] = data["ground_truth"] + data["slope"]*bg + np.random.rand(n_points)
     return data
 
 def make_spikes(n_points = 10000):
@@ -155,16 +155,16 @@ def plot_data_creation_process(colors = sns.color_palette()):
     
     
     big_axes[2].set_title("$\\bf{(C)}$ Neuropil Subtraction with Underline Regression\n\n")
-    ax[2][0].set_title("    Underline Regression used to infer...")
+    ax[2][0].set_title("    Pseudo-Huber-like Regression used to infer...")
     ax[2][0].plot(data["bg"],data["raw"], 'o')
     ax[2][0].plot(data["bg"], data["H_theta"][0] + data["H_theta"][1]*data["bg"])
     ax[2][1].set_title("...an estimation of true cell fluorescence")
     ax[2][1].plot(data["frame_n"],(data["raw"]-data["H_theta"][1]*data["bg"]))
     
     
-    
     for axis in ax[0:2,:].flatten():
         axis.set_ylim((-0.5,None))
+    ax[2][1].set_ylim(ax[0][0].get_ylim())
     fig.show()
 
 def plot_data():
