@@ -41,14 +41,14 @@ class Recording:
             #load in all the suite2p stuff
             self.stat = np.load("stat.npy", allow_pickle = True)
             self.ops  = np.load("ops.npy", allow_pickle = True).item()
-            self.F    = np.load("F.npy")
+            self._F    = np.load("F.npy")
             #drop ROIs that are everywhere zero (why do these exist?)
-            valid_idxs = np.count_nonzero(self.F,axis=-1)!=0
-            self.F = self.F[valid_idxs]
+            valid_idxs = np.count_nonzero(self._F,axis=-1)!=0
+            self.F = self._F[valid_idxs]
             # #Sometimes small values are negative which messes with division by F0
             # self.F    = np.abs(self.F)
-            self.Fneu = np.load("Fneu.npy")
-            self.Fneu = self.Fneu[valid_idxs]
+            self._Fneu = np.load("Fneu.npy")
+            self.Fneu = self._Fneu[valid_idxs]
             # #same here
             # self.Fneu = np.abs(self.Fneu)
     
@@ -91,7 +91,7 @@ class Recording:
             os.chdir(cwd)
     
     def gen_iscell(self):
-        F_Fneu_ratio = np.fromiter((np.sum(x[0])/np.sum(x[1]) for x in zip(self.F,self.Fneu)),
+        F_Fneu_ratio = np.fromiter((np.sum(x[0])/np.sum(x[1]) for x in zip(self._F,self._Fneu)),
                                         dtype = np.double)
         skew = np.fromiter((x["skew"] for x in self.stat),
                                 dtype = np.float32)

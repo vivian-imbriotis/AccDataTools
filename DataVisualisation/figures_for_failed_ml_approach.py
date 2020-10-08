@@ -98,9 +98,10 @@ class FailedMachineLearningFigure():
 
 
         
-    def produce_classifier(self, verbose=False, use_all = False):
+    def produce_classifier(self,percent=80):
         classifier = LogisticRegression(verbose=verbose,max_iter=1000)
-        classifier.fit(self.out_prime,self.iscell) if not use_all else classifier.fit(self.all_features,self.iscell)
+        classifier.fit(self.out_prime[:len(self.out_prime)*percent//100],
+                       self.iscell)
         return classifier
     
 
@@ -124,7 +125,8 @@ class FailedMachineLearningFigure():
         ax[0].set_ylabel("Second Principal Component")
         ax[0].set_xlabel("First Principal Component")
 
-        self.classifier = self.produce_classifier()
+        self.classifier = self.produce_classifier(percent=80)
+        self.testing_data = self.out_prime[len(self.out_prime)*80//100:]
         plot_confusion_matrix(
                 self.classifier, 
                 self.out_prime,
@@ -135,8 +137,6 @@ class FailedMachineLearningFigure():
                 ax = ax[1],
                 cmap = plt.cm.Blues)
         ax[1].set_title("$\\bf{(B)}$",loc="left")
-        ax[1].set_ylabel("")
-        ax[1].set_xlabel("")
         self.fig.show()
         
 

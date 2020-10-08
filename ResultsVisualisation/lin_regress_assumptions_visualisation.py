@@ -16,26 +16,33 @@ plt.rcParams["font.family"] = 'Times New Roman'
 plt.rcParams["font.size"] = 11
 
 class LinearRegressionAssumptionsFigure:
-    def __init__(self,df,model = ""):
+    def __init__(self,df1,df2):
         self.fig,ax = plt.subplots(nrows=2,
                                    tight_layout=True,
                                    figsize = [8,6])
         ax[0].set_title('$\\bf{(A)}$',loc='left')
-        ax[0].set_ylabel(f"Proportion of{f' {model}' if model else ''} models")
+        ax[0].set_ylabel("Proportion of models")
         ax[0].set_xlabel("Durbin-Watson Statistic")
-        ax[0].hist(df.durbin_statistic.values,
-                   bins = np.linspace(0,4,30,
-                                      endpoint=True),
-                   weights = np.ones(len(df))/len(df))
         ax[0].yaxis.set_major_formatter(PercentFormatter(1))
         ax[1].set_title('$\\bf{(B)}$',loc='left')
-        ax[1].set_ylabel(f"Proportion of{f' {model}' if model else ''} models")
+        ax[1].set_ylabel("Proportion of models")
         ax[1].set_xlabel("Shapiro-Wilks Statistic")
-        ax[1].hist(df.shapiro_statistic.values,
-                   bins = np.linspace(0,1,30,
-                                      endpoint=True),
-                   weights = np.ones(len(df))/len(df))
         ax[1].yaxis.set_major_formatter(PercentFormatter(1))
+        
+        for df, name in zip((df1,df2),("Uncollapsed","Collapsed")):
+            ax[0].hist(df.durbin_statistic.values,
+                       bins = np.linspace(0,4,30,
+                                          endpoint=True),
+                       weights = np.ones(len(df))/len(df),
+                       label = f"{name} Models",
+                       alpha = 0.5)
+            ax[1].hist(df.shapiro_statistic.values,
+                       bins = np.linspace(0,1,30,
+                                          endpoint=True),
+                       weights = np.ones(len(df))/len(df),
+                       label = f"{name} Models",
+                       alpha=0.5)
+        ax[0].legend()
     def show(self):
         self.fig.show()
 
@@ -54,8 +61,7 @@ def read_in_data(path):
 if __name__=="__main__":
     plt.close('all')
     df1,df2 = read_in_data(path = "../RScripts/lin_regress_assumption_statistics.csv")
-    LinearRegressionAssumptionsFigure(df1,model='kernel').show()
-    LinearRegressionAssumptionsFigure(df2,model='collapsed').show()
+    LinearRegressionAssumptionsFigure(df1, df2).show()
 
 
     
