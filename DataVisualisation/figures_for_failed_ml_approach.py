@@ -148,6 +148,9 @@ class FailedMachineLearningFigure:
 if __name__=='__main__':
     plt.ioff()
     plt.close('all')
-    suite2p_path = r"D:\Local_Repository\CFEB013\2016-06-29_02_CFEB013\suite2p\plane0"
+    suite2p_path = r"H:\Local_Repository\CFEB013\2016-06-29_02_CFEB013\suite2p\plane0"
     iscell_path  = "manually_labelled_cells_for_2016-06-29_02_CFEB013.npy"
-    FailedMachineLearningFigure(suite2p_path,iscell_path).show()
+    suite2p_path2 = r"H:\Local_Repository\CFEB013\2016-05-31_02_CFEB013\suite2p\plane0"
+    iscell_path2  = "manually_labelled_cells_for_2016-05-31_02_CFEB013.npy"
+    FailedMachineLearningFigure(suite2p_path,iscell_path,
+                                suite2p_path2,iscell_path2).show()
