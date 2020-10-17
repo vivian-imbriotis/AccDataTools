@@ -28,32 +28,34 @@ plt.rcParams["font.size"] = 11
 class LickingSubtractionValidationFigure:
     nrows = 5
     nplots = 8
+    total_points = 4000
+    training_points = total_points*4//5
         
     def __init__(self, df, state = np):
         #select a random ROI
-        roi = df.sample(random_state=state).ROI_ID.values[0]
+        roi = df.ROI_ID.unique()[state]
         df  = df[df.ROI_ID == roi]
-        df_on_f = df.dF_on_F.values[:1250]
+        df_on_f = df.dF_on_F.values[:self.total_points]
         x = np.linspace(0,len(df_on_f)//5, len(df_on_f))
-        nontrial_idxs = pd.isnull(df.Trial_ID.values)[:1250]
+        nontrial_idxs = pd.isnull(df.Trial_ID.values)[:self.total_points]
         trial_idxs = ~nontrial_idxs
         trial_starts, = np.array(np.where(rising_edges(trial_idxs,cutoff=0.5)))//5
         trial_ends,   = np.array(np.where(falling_edges(trial_idxs,cutoff=0.5)))//5
-        fig = plt.figure(figsize=(10,11), tight_layout=True)
-        gs = GridSpec(self.nrows, 8, fig)
+        self.fig = plt.figure(figsize=(10,11), tight_layout=True)
+        gs = GridSpec(self.nrows, 8, self.fig)
         ax = np.zeros(self.nplots,dtype=object)
-        ax[0] = fig.add_subplot(gs[0,:])
-        ax[1] = fig.add_subplot(gs[1,:])
-        ax[2] = fig.add_subplot(gs[2,:-2])
-        ax[3] = fig.add_subplot(gs[2,-2:])
-        ax[4] = fig.add_subplot(gs[3,0:2])
-        ax[5] = fig.add_subplot(gs[3,3:5])
-        ax[6] = fig.add_subplot(gs[3,6:8])
-        ax[7] = fig.add_subplot(gs[4,:])
-        minus_plot = fig.add_subplot(gs[3,2])
+        ax[0] = self.fig.add_subplot(gs[0,:])
+        ax[1] = self.fig.add_subplot(gs[1,:])
+        ax[2] = self.fig.add_subplot(gs[2,:-2])
+        ax[3] = self.fig.add_subplot(gs[2,-2:])
+        ax[4] = self.fig.add_subplot(gs[3,0:2])
+        ax[5] = self.fig.add_subplot(gs[3,3:5])
+        ax[6] = self.fig.add_subplot(gs[3,6:8])
+        ax[7] = self.fig.add_subplot(gs[4,:])
+        minus_plot = self.fig.add_subplot(gs[3,2])
         minus_plot.set_axis_off(); minus_plot.text(0.5,0.5,"$\\bf{-}$",
                                                    transform=minus_plot.transAxes)
-        equals_plot = fig.add_subplot(gs[3,5])
+        equals_plot = self.fig.add_subplot(gs[3,5])
         equals_plot.set_axis_off(); equals_plot.text(0.5,0.5,"$\\bf{=}$",
                                                    transform=equals_plot.transAxes)
         dff_trial = df_on_f.copy(); dff_trial[nontrial_idxs]=np.nan
@@ -73,7 +75,7 @@ class LickingSubtractionValidationFigure:
         
         ax[1].plot(x,dff_nontrial, color = 'k')
         for a in ax[:2]:
-            a.set_xlim(0,1250//5)
+            a.set_xlim(0,self.total_points//5)
 
         ymin,ymax = ax[1].get_ylim()
         xmin,xmax = ax[1].get_xlim()
@@ -91,30 +93,30 @@ class LickingSubtractionValidationFigure:
         for patch in (training_dataset,testing_dataset):
             ax[1].add_patch(patch)
         
-        training_x = x[:1000]
-        testing_x  = x[1000:1250]
-        training_dat = dff_nontrial[:1000]
-        training_licking = df.lick_factor[:1000].values
-        testing_dat = dff_nontrial[1000:1250]
-        testing_licking = df.lick_factor[1000:1250]
+        training_x = x[:self.training_points]
+        testing_x  = x[self.training_points:self.total_points]
+        training_dat = dff_nontrial[:self.training_points]
+        training_licking = df.lick_factor[:self.training_points].values
+        testing_dat = dff_nontrial[self.training_points:self.total_points]
+        testing_licking = df.lick_factor[self.training_points:self.total_points]
         #define some R variables
         r.globalenv["dff"]    = r.FloatVector(dff_nontrial)
-        r.globalenv["licking"]= r.FloatVector(df.lick_factor[:1250].values)
+        r.globalenv["licking"]= r.FloatVector(df.lick_factor[:self.total_points].values)
         r.r("dat   <- data.frame(dff,licking)")
-        r.r("train <- dat[1:1000,]")
-        r.r("test  <- dat[-(1:1000),]")
+        r.r(f"train <- dat[1:{self.training_points},]")
+        r.r(f"test  <- dat[-(1:{self.training_points}),]")
         r.r("model <- lm(dff~as.factor(licking),na.action=na.omit,dat=train)")
         r.r("preds <- predict(model,test)")
         model = r.r.model
         fitted_vals = np.array(r.r("predict(model,train)"))
-        fitted_vals[trial_idxs[:1000]] = np.nan
+        fitted_vals[trial_idxs[:self.training_points]] = np.nan
         preds = np.array(r.r.preds)
-        preds[trial_idxs[1000:1250]] = np.nan
+        preds[trial_idxs[self.training_points:self.total_points]] = np.nan
         ax[2].plot(training_x,training_dat, 
                    color = 'k')
         ax[2].plot(training_x,fitted_vals, color=sns.color_palette()[1],
                    label = "Fitted model values based on licking (significant)")
-        ax[3].plot(x[1250*4//5:1250],dff_nontrial[1250*4//5:1250], 
+        ax[3].plot(x[self.total_points*4//5:self.total_points],dff_nontrial[self.total_points*4//5:self.total_points], 
                    color = 'k')
         ax[3].plot(testing_x,preds, color = sns.color_palette()[2],
                    label = "Model predictions")
@@ -136,7 +138,7 @@ class LickingSubtractionValidationFigure:
         r.r("res$dff = res$dff - preds")
         r.r("model2 <- lm(dff~as.factor(licking),na.action=na.omit,dat=res)")
         newpreds = np.array(r.r("predict(model2,test)"))
-        newpreds[trial_idxs[1000:1250]] = np.nan
+        newpreds[trial_idxs[self.training_points:self.total_points]] = np.nan
         ax[-1].plot(testing_x,newpreds,color=sns.color_palette()[3],
                     label = "A new fitted model, based on licking (NOT significant))")
         for a in ax:
@@ -146,7 +148,8 @@ class LickingSubtractionValidationFigure:
         ax[3].set_ylabel("")
         for a,char in zip(ax,"ABCDEFGE"):
             a.set_title("$\\bf{(" + f"{char}" +")}$", loc="right")
-        fig.show()
+    def show(self):
+        self.fig.show()
         
 #This should probably inherit from the previous figure and just
 #overrive the __init__ method
@@ -225,5 +228,5 @@ class LickingSubtractionThenCollapsingWorkflow:
 if __name__=="__main__":
     plt.close('all')
     df = pd.read_csv(r"C:\Users\viviani\Desktop\single_experiments_for_testing\2016-11-01_03_CFEB027.csv")
-    LickingSubtractionValidationFigure(df,19)
-    LickingSubtractionThenCollapsingWorkflow(df,5)
+    LickingSubtractionValidationFigure(df,180).show()
+    LickingSubtractionThenCollapsingWorkflow(df,5).show()
