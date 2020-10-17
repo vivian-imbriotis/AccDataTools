@@ -30,8 +30,9 @@ class RetinalReceptiveField:
     gauss = staticmethod(
         lambda r2,a,b:a*np.exp(-b*(r2))
         )
-    def __init__(self,xy = (30,30),sigma = 10):
-        field = np.empty((100,100))
+    def __init__(self,xy = (100,150),sigma = 150,
+                 shape = (1000,1000)):
+        field = np.empty(shape)
         self.xy = xy
         self.sigma = sigma
         for (x,y),_ in np.ndenumerate(field):
@@ -41,27 +42,23 @@ class RetinalReceptiveField:
         _x = x - self.xy[0]
         _y = y - self.xy[1]
         r2 = (_x**2+_y**2) / ((self.sigma)**2)
-        return (10/3)*(self.gauss(r2,1,4)-self.gauss(r2,0.7,1))
+        return (10/3)*(self.gauss(r2,1,4)-self.gauss(r2,0.5,2))
     
     
     def apply_to_axis(self, axis):
 
         axis.imshow(self.field,
                     cmap = "gray",
-                    interpolation = "bicubic")
+                    interpolation = "bicubic",
+                    vmin=-1,
+                    vmax= 1)
         axis.set_yticks([])
         axis.set_xticks([])
         return axis
 
-class Grating:
-    sine = staticmethod(
-        lambda x,y,a,theta:a*np.sin((np.cos(theta)*x + np.sin(theta)*y)/a)
-        )
-    def __init__(self,a = 10,theta = 1):
-        field = np.empty((100,100))
-        for (x,y),_ in np.ndenumerate(field):
-            field[x][y] = self.sine(x,y,a,theta)
-        self.field = field
+class Image:
+    def __init__(self,data):
+        self.field = (data / 255)*2 - 1
     def apply_to_axis(self, axis):
 
         axis.imshow(self.field,
@@ -80,19 +77,38 @@ class HubelWeiselFigure:
                "convolving the receptive field (a)\nwith the stimulus (b) "
                "and responding to the average brightness of the output (c).")
     def __init__(self):
-        field = RetinalReceptiveField()
-        grat = Grating()
-        self.fig, (field_ax, stim_ax, conv_ax) = plt.subplots(ncols=3,figsize = (8,4))
-        field_ax.set_title("(a) Bipolar cell receptive field")
-        field.apply_to_axis(field_ax)
-        stim_ax.set_title("(b) Visual stimulus")
-        grat.apply_to_axis(stim_ax)
-        conv_ax.set_title("(c) Convolved stimulus")
-        conv_ax.imshow(field.field*grat.field,
+        im = mpimg.imread("cat.jpg")[100:-100:,300:-300]
+        im = im.mean(axis=-1)        #convert to grayscale
+        im = np.minimum(im/140*256,np.ones(im.shape)*255)
+        field0 = RetinalReceptiveField(shape = im.shape)
+        field1 = RetinalReceptiveField(shape = im.shape, xy = (530,510))
+        im = Image(im)
+        self.fig, ax = plt.subplots(ncols=3,
+                                    nrows=2,
+                                    figsize=(8,6),
+                                    tight_layout=True)
+        (stim_ax, field_ax, conv_ax) = ax.transpose()
+        field_ax[0].set_title("$\\bf{(B)}$ Bipolar cell receptive field")
+        field0.apply_to_axis(field_ax[0])
+        field1.apply_to_axis(field_ax[1])
+        stim_ax[0].set_title("$\\bf{(A)}$ Visual stimulus")
+        im.apply_to_axis(stim_ax[0])
+        im.apply_to_axis(stim_ax[1])
+        conv_ax[0].set_title("$\\bf{(C)}$ Convolved stimulus")
+        conv_ax[0].imshow(field0.field*im.field,
                        cmap = 'gray',
-                       interpolation = 'bicubic')
-        conv_ax.set_yticks([])
-        conv_ax.set_xticks([])
+                       interpolation = 'bicubic',
+                       vmin=-1,
+                       vmax = 1)
+        conv_ax[1].imshow(field1.field*im.field,
+                       cmap = 'gray',
+                       interpolation = 'bicubic',
+                       vmin=-1,
+                       vmax = 1)
+        conv_ax[0].set_yticks([])
+        conv_ax[0].set_xticks([])
+        conv_ax[1].set_yticks([])
+        conv_ax[1].set_xticks([])
     def show(self):
         self.fig.show()
         
@@ -370,7 +386,7 @@ class PsychosisPlot(BayesPlot):
 if __name__=="__main__":
     plt.close("all")
     HubelWeiselFigure().show()
-    TopDownIllusionFigure().show()
-    PredictiveCodingPlot().show()
-    ContrastResponsePlot().show()
-    PsychosisPlot().show()
+    # TopDownIllusionFigure().show()
+    # PredictiveCodingPlot().show()
+    # ContrastResponsePlot().show()
+    # PsychosisPlot().show()
