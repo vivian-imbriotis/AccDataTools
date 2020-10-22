@@ -28,20 +28,20 @@ def make_data(n_points = 10000):
     data["ground_truth"] = spikes
     data["bg"] = bg
     data["slope"] = np.random.random()+0.5
-    data["raw"] = data["ground_truth"] + data["slope"]*bg + np.random.rand(n_points)
+    data["raw"] = data["ground_truth"] + data["slope"]*bg #+ np.random.rand(n_points)
     return data
 
 def make_spikes(n_points = 10000):
-    spike_prob = 0.01
+    spike_prob = 0.03
     spike_size_mean = 1
     kernel = make_kernel()
     spike_times = 1.0 * (np.random.rand(n_points-kernel.size+1) < spike_prob)
     spike_amps = np.random.lognormal(mean = spike_size_mean, sigma = 0.5, size=spike_times.size) * spike_times
-    spikes = 5*np.convolve(spike_amps, kernel) + 8 + 6*np.random.rand(n_points)
+    spikes = np.convolve(spike_amps, kernel) + 1 + 0.5*np.random.rand(n_points)
     return spikes
 
 def make_bg(n_points = 10000):
-    return 6*(np.sin(np.arange(0, n_points)/(6.28))/2) + 30 + 10*np.random.rand(n_points)
+    return 6*(np.sin(np.arange(0, n_points)/(6.28))/2) + 30 + 15*np.random.rand(n_points)
 
 
 def make_kernel(tau = 10):
@@ -69,13 +69,9 @@ def plot_data_creation_process(colors = sns.color_palette()):
     for row in range(len(big_axes)):
         ax[row][0] = fig.add_subplot(len(big_axes),ncols,ncols*row+1)
         ax[row][1] = fig.add_subplot(len(big_axes),ncols,ncols*row+2)
-    
-    for axis in ax.flatten():
-        axis.set_xticklabels([])
         
 
     for axis in ax[2:,0]:
-        axis.set_yticks([])
         axis.set_xlabel("Fneu")
         axis.set_ylabel("F")
     big_axes[0].set_title("Ground Truth")
@@ -115,57 +111,69 @@ def plot_data_creation_process(colors = sns.color_palette()):
     data = proc_data(data)
     
     #construct plot layout with row titles:
-    nrows = 3
+    nrows = 5
     ncols = 2
     fig, big_axes = plt.subplots(nrows = nrows, ncols = 1,tight_layout= True,
-                           figsize = (10,12))
+                           figsize = (10,16))
     for row, big_ax in enumerate(big_axes, start=1):
-        big_ax.axis("off")
-        big_ax._frameon = False
+        if row!=2:
+            big_ax.axis("off")
+            big_ax._frameon = False
     ax = np.empty((len(big_axes),ncols),dtype=object)
     for row in range(len(big_axes)):
         ax[row][0] = fig.add_subplot(len(big_axes),ncols,ncols*row+1)
         ax[row][1] = fig.add_subplot(len(big_axes),ncols,ncols*row+2)
     
     for idx, axis in enumerate(ax.flatten()):
-        axis.set_xticklabels([])
         if idx!=4:
             axis.set_xlabel("Time")
-        if idx in (0,2,3,5):
+        if idx in (0,2,3,5,7,9):
             axis.set_ylabel("Fluorescence (AU)")
-        elif idx==1:
-            axis.set_ylabel("Fluorescence ($\Delta$F/F0 units)")
+            axis.set_xticklabels([])
         
     for axis in ax[2:,0]:
-        axis.set_yticks([])
         axis.set_xlabel("Neuropil Fluorescence")
         axis.set_ylabel("Measured Fluorescence")
     
     big_axes[0].set_title("$\\bf{(A)}$ Ground Truth\n\n")
-    ax[0][0].set_title("True Cell Fluorescence")
-    ax[0][0].plot(data["frame_n"], data["ground_truth"])
-    ax[0][1].set_title("True cell $\\Delta$F/F0")
-    ax[0][1].plot(data["frame_n"], data["gt_df_on_f"])
+    ax[0][1].set_title("True Cell Fluorescence")
+    ax[0][1].plot(data["frame_n"], data["ground_truth"])
+    ax[0][0].set_title("Neuropil Fluorescence")
+    ax[0][0].plot(data["frame_n"], data["bg"])
     
-    big_axes[1].set_title("$\\bf{(B)}$ Background Contamination\n\n")
-    ax[1][0].set_title("Neuropil Fluorescence")
-    ax[1][0].plot(data["frame_n"], data["bg"])
-    ax[1][1].set_title("Measured Cell Fluorescence\n(Cell Fluorecence + $\\beta\\times$Neuropil Fluorescence + $\\epsilon$)")
-    ax[1][1].plot(data["frame_n"], data["raw"])
+    big_axes[1].set_title("$\\bf{(B)}$ Measured Cell Fluorescence\n(Cell Fluorecence + $\\beta\\times$Neuropil Fluorescence + $\\epsilon$)\n")
+    ax[1][0].set_axis_off()
+    ax[1][1].set_axis_off()
+    big_axes[1].plot(data["frame_n"], data["raw"])
     
-    
-    big_axes[2].set_title("$\\bf{(C)}$ Neuropil Subtraction with Underline Regression\n\n")
-    ax[2][0].set_title("    Pseudo-Huber-like Regression used to infer...")
+    big_axes[2].set_title("$\\bf{(C)}$ Neuropil Subtraction with $\\beta$=0.7 assumption\n\n")
     ax[2][0].plot(data["bg"],data["raw"], 'o')
-    ax[2][0].plot(data["bg"], data["H_theta"][0] + data["H_theta"][1]*data["bg"])
-    ax[2][1].set_title("...an estimation of true cell fluorescence")
-    ax[2][1].plot(data["frame_n"],(data["raw"]-data["H_theta"][1]*data["bg"]))
+    ax[2][0].plot(data["bg"], 0.7*data["bg"])
+    ax[2][1].set_title("Poor estimation of true cell fluorescence")
+    ax[2][1].plot(data["frame_n"],(data["raw"]-0.7*data["bg"]))
     
+    big_axes[3].set_title("$\\bf{(D)}$ Neuropil Subtraction with OLS Regression\n\n")
+    ax[3][0].plot(data["bg"], data["raw"], 'o')
+    interc, slpe = ols(data["bg"],data["raw"])
+    ax[3][0].plot(data["bg"], interc + slpe*data["bg"])
+    ax[3][1].set_title("Better estimation of true cell fluorescence")
+    ax[3][1].plot(data["frame_n"],(data["raw"]-interc-slpe*data["bg"]))
+    
+    big_axes[4].set_title("$\\bf{(E)}$ Neuropil Subtraction with Underline Regression\n\n")
+    ax[4][0].plot(data["bg"],data["raw"], 'o')
+    ax[4][0].plot(data["bg"], data["H_theta"][0] + data["H_theta"][1]*data["bg"])
+    ax[4][1].set_title("Best estimation of true cell fluorescence")
+    ax[4][1].plot(data["frame_n"],(data["raw"]-data["H_theta"][1]*data["bg"]))
     
     for axis in ax[0:2,:].flatten():
         axis.set_ylim((-0.5,None))
-    ax[2][1].set_ylim(ax[0][0].get_ylim())
-    fig.show()
+    for idx,axis in enumerate(ax[-2:,1]):
+        ymin, ymax = ax[0,1].get_ylim()
+        min_data = (min((data["raw"]-interc-slpe*data["bg"])) if idx==0 else
+                    min(data["raw"]-data["H_theta"][1]*data["bg"]))
+        ymin = min(ymin,min_data)
+        axis.set_ylim((ymin,ymax))
+    return fig
 
 def plot_data():
     data = make_data()
@@ -260,38 +268,6 @@ def compare_approaches(df = False):
     ax[3][1].set_xlabel("Ground Truth")
     ax[3][1].set_ylabel("Custom Regression Approach 2")
     ax[3][1].legend(loc='upper left')
-    fig.show()
-
-
-def time_approaches():
-    N = np.linspace(80,100000,10).astype(int)
-    robust_regression_times = np.zeros(N.shape)
-    powell_times = np.zeros(N.shape)
-    L2_norm_times = np.zeros(N.shape)
-    for idx,n_points in enumerate(N):
-        print(idx)
-        t1=np.zeros(10); t2=np.zeros(10); t3=np.zeros(10); t4=np.zeros(10)
-        for i in range(1):
-            data = make_data(n_points)
-            t1[i] = time()
-            robust_regression(data["bg"], data["raw"])
-            t2[i] = time()
-            custom_regression(data["bg"], data["raw"])
-            t3[i] = time()
-            parabolic_regression(data["bg"], data["raw"])
-            t4[i] = time()
-        robust_regression_times[idx] = (t2-t1).mean()
-        powell_times[idx] = (t3-t2).mean()
-        L2_norm_times[idx] = (t4-t3).mean()
-    fig,ax = plt.subplots(nrows = 3, sharex=True)
-    ax[0].set_title("Robust Regression Time Complexity")
-    ax[0].plot(N,robust_regression_times)
-    ax[1].set_title("Powell Method Time Complexity")
-    ax[1].plot(N,powell_times)
-    ax[1].set_ylabel("Execution Time")
-    ax[2].set_title("BFGS Method Time Complexity")
-    ax[2].plot(N,L2_norm_times)
-    ax[2].set_xlabel("Number of data points")
     fig.show()
 
         
@@ -459,4 +435,5 @@ def run_simulation():
 
 # plot_data_creation_process()
 if __name__=="__main__":
-    plot_data_creation_process()
+    fig = plot_data_creation_process()
+    fig.savefig("C:/Users/Vivian Imbriotis/Desktop/figureN.png")
