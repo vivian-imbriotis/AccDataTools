@@ -60,17 +60,31 @@ class PupilModelPredictionFigure:
         self.fig.show()
     
     @staticmethod
-    def plot_with_confidence_interval(axis,dataframe, color, mean_color=None):
+    def plot_with_confidence_interval(axis,dataframe, color, mean_color=None,
+                                      method="fill"):
         if mean_color==None:
             mean_color=color
         x = np.arange(0,25)/5
-        axis.plot(x,dataframe.fit[:25],
-                  color = mean_color,
-                  label = "prediction")
-        axis.fill_between(x,dataframe.upr[:25],dataframe.lwr[:25],
-                          color = color,
-                          alpha = 0.3,
-                          label = "80% confidence interval")
+        if method=="fill":
+            axis.plot(x,dataframe.fit[:25],
+                      color = mean_color,
+                      label = "prediction")
+        else:
+            axis.plot(x,dataframe.fit[:25],
+                      color = mean_color,
+                      label = "Mean prediction",
+                      linestyle="--")
+        if method=='fill':
+            axis.fill_between(x,dataframe.upr[:25],dataframe.lwr[:25],
+                              color = color,
+                              alpha = 0.3,
+                              label = "80% confidence interval")
+        else:
+            axis.plot(x,dataframe.upr[:25],
+                      color="k",linestyle = ":",
+                      label = "80% prediction interval")
+            axis.plot(x,dataframe.lwr[:25],
+                      color="k",linestyle = ":")
         axis.set_ylim((12,18))
 
 

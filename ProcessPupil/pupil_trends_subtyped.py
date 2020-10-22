@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import seaborn
 from accdatatools.ToCSV.without_collapsing import RecordingUnroller, get_whole_dataset
+from accdatatools.DataVisualisation.pupil_mixed_model_output_visualisation import PupilModelPredictionFigure
 
 seaborn.set_style("darkgrid")
 plt.rcParams["font.family"] = 'Times New Roman'
@@ -98,7 +99,8 @@ def plot_trial_subset_with_range(axis,correct,go,df, normalize = False,
     axis.set_xlabel("Time since trial onset (s)")
 
 
-def create_figure(df,title=None, render = True, normalize = False):
+def create_figure(df,title=None, render = True, normalize = False,
+                  return_figure_and_artists=False):
     print(f"Initial shape of dataframe in create_figure call is {df.shape}")
     #Clean up dataframe
     df = df[~pd.isnull(df.Trial_ID)]
@@ -149,12 +151,15 @@ def create_figure(df,title=None, render = True, normalize = False):
     cb.set_label("Trial Number")
     if title:
         fig.suptitle(title)
+    if return_figure_and_artists:
+        return (fig,ax)
     if render: fig.show()
     return (hits,misses,fas,crs)
 
 
 def create_range_figure(df,title=None, normalize = False, 
-                        range_type = "error"):
+                        range_type = "error",
+                        return_figure_and_artists = False):
     df = df[~pd.isnull(df.Trial_ID)]
     fig,ax = plt.subplots(ncols = 2, nrows = 2, constrained_layout = True,
                           figsize = (12,8))
@@ -195,6 +200,7 @@ def create_range_figure(df,title=None, normalize = False,
     if title:
         fig.suptitle(title)
     fig.show()
+    if return_figure_and_artists: return (fig,ax)
     return (hits,misses,fas,crs)
 
 def perform_testing(df, render = False, normalize = False):
@@ -442,13 +448,41 @@ def create_heatmap_figure(df):
     
     fig.show()
 
+def create_final_figure():
+    df = pd.read_csv("C:/Users/viviani/Desktop/full_datasets_for_analysis/left_only_high_contrast.csv")
+    fig,ax = create_range_figure(df, 
+                                 return_figure_and_artists=True,
+                                 range_type="deviation")
+    (hit_ax, miss_ax), (fa_ax, cr_ax) = ax
+    df2 = pd.read_csv("C:/Users/viviani/Desktop/model predictions/mixed_linear_model_pupil_prediction.csv")
+    PupilModelPredictionFigure.plot_with_confidence_interval(hit_ax, 
+                                  df2[df2.trial_type=="hit"], 
+                                  color="k",
+                                  method="lines")
+    PupilModelPredictionFigure.plot_with_confidence_interval(miss_ax, 
+                                  df2[df2.trial_type=="miss"], 
+                                  color="k",
+                                  method="lines")
+    PupilModelPredictionFigure.plot_with_confidence_interval(fa_ax, 
+                                  df2[df2.trial_type=="fa"], 
+                                  color="k",
+                                  method="lines")
+    PupilModelPredictionFigure.plot_with_confidence_interval(cr_ax, 
+                                  df2[df2.trial_type=="cr"], 
+                                  color="k",
+                                  method="lines")
+    hit_ax.legend()
+    for a in ax.flatten(): a.set_ylim((11,19))
+    return fig
 if __name__=="__main__":
-    plt.close('all')
-    with np.errstate(all='raise'):
-        df = pd.read_csv("C:/Users/viviani/Desktop/full_datasets_for_analysis/left_only_high_contrast.csv")
-        # create_figure(df,normalize=True)
-        create_range_figure(df,normalize=True,range_type="deviation")
-        create_range_figure(df,normalize=True,range_type="error")
+    # plt.close('all')
+    # with np.errstate(all='raise'):
+    #     df = pd.read_csv("C:/Users/viviani/Desktop/full_datasets_for_analysis/left_only_high_contrast.csv")
+    #     # create_figure(df,normalize=True)
+    #     create_range_figure(df,normalize=True,range_type="deviation")
+    #     create_range_figure(df,normalize=True,range_type="error")
+    fig = create_final_figure()
+    fig.show()
     
     
 

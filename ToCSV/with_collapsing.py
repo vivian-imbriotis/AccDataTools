@@ -10,20 +10,24 @@ time and ROIS to reduce the number of dimentions in the output data.
 Collapsing across ROIs without collapsing across time is not currently implemented.
 """
 import warnings
+from string import ascii_uppercase
 
 from accdatatools.ToCSV.without_collapsing import RecordingUnroller
 import numpy as np
 import pandas as pd
 from scipy.stats import kstest, zscore, pearsonr, ttest_ind
 import matplotlib.pyplot as plt
-from jenkspy import jenks_breaks
 # from scipy.stats import pearsonr
 from accdatatools.Utils.map_across_dataset import apply_to_all_recordings_of_class
 import seaborn as sb
-
 from numpy import diff
 
+sns = sb
+
 sb.set_style('darkgrid')
+plt.rcParams["font.family"] = 'Times New Roman'
+plt.rcParams["font.size"] = 11
+
 
 # def calculate_pvalues(df):
 #     df = df.dropna()._get_numeric_data()
@@ -261,7 +265,7 @@ def generate_attention_metrics_figure():
     fig.show()
     
 def perform_attention_metrics_testing_left_only():
-    df = pd.read_csv("C:/Users/viviani/Desktop/reaction_time_vs_pupil_size_left_only.csv")
+    df = pd.read_csv("C:/Users/viviani/Desktop/OldReactionTimeCalc/reaction_time_vs_pupil_size_left_only.csv")
     df["Recording_ID"] = list(map(lambda s:s.split(" ")[-1],df.TrialID.values))
     for ID in df.Recording_ID.unique():
         subset = df[df.Recording_ID == ID].Pupil_size_tone.values
@@ -295,7 +299,7 @@ def perform_attention_metrics_testing_left_only():
     fig.show()
 
 def perform_attention_metrics_testing_low_contrast():
-    df = pd.read_csv("C:/Users/viviani/Desktop/reaction_time_vs_pupil_size_low_contrast.csv")
+    df = pd.read_csv("C:/Users/viviani/Desktop/OldReactionTimeCalc/reaction_time_vs_pupil_size_low_contrast.csv")
     df["Recording_ID"] = list(map(lambda s:s.split(" ")[-1],df.TrialID.values))
     for ID in df.Recording_ID.unique():
         subset = df[df.Recording_ID == ID].Pupil_size_tone.values
@@ -350,7 +354,7 @@ def perform_attention_metrics_testing_low_contrast():
     print(f"\n0.05-Critical value after Bonferroni Correction\nfor 4 comparisons is {0.05/4:.4f}")
 
 def perform_attention_metrics_testing_with_derivative():
-    df = pd.read_csv("C:/Users/viviani/Desktop/reaction_time_vs_pupil_size_low_contrast.csv")
+    df = pd.read_csv("C:/Users/viviani/Desktop/OldReactionTimeCalc/reaction_time_vs_pupil_size_low_contrast.csv")
     df["Recording_ID"] = list(map(lambda s:s.split(" ")[-1],df.TrialID.values))
     for ID in df.Recording_ID.unique():
         subset = df[df.Recording_ID == ID].Pupil_change.values
@@ -386,8 +390,7 @@ def perform_attention_metrics_testing_with_derivative():
     ax[1][1].set_xticklabels(["10%","50%"])
     ax[1][1].set_xlabel("Contrast")
     ax[1][1].set_ylabel("Mean Change in pupil diameter over second prior to stimulus\n(z-score within recording)")
-    fig.show()
-    
+
     
     print("\nChange in Pupil Size Vs Reaction Time")
     s,p = pearsonr(df2.Reaction_Time,df2.Pupil_size)
@@ -404,6 +407,59 @@ def perform_attention_metrics_testing_with_derivative():
                  rt_by_contrast[1]))
     print(f"\n0.05-Critical value after Bonferroni Correction\nfor 4 comparisons is {0.05/4:.4f}")
 
+class AttentionMetricsVsPupilSizeFigure:
+    def __init__(self):
+        self.fig,ax = plt.subplots(figsize=[8,9],nrows = 3, ncols = 2,
+                                   tight_layout=True)
+        self.format_axes(ax)
+        
+    def format_axes(self, ax):
+        violins = []
+        for col,path in zip((0,1),
+                            ("reaction_time_vs_pupil_size_left_only.csv",
+                             "reaction_time_vs_pupil_size_low_contrast.csv")):
+            print(path)
+            df = pd.read_csv(f"C:/Users/viviani/Desktop/OldReactionTimeCalc/{path}")
+            df["Recording_ID"] = list(map(lambda s:s.split(" ")[-1],df.TrialID.values))
+            for ID in df.Recording_ID.unique():
+                subset = df[df.Recording_ID == ID].Pupil_change.values
+                subset_zscore = zscore(subset, nan_policy = "omit")
+                df.loc[df.Recording_ID == ID, "Pupil_change"] = subset_zscore
+            df2 = df.loc[:,'Reaction_Time':'Pupil_change'][df.Reaction_Time!='NA'].dropna()
+            df2.Reaction_Time = pd.to_numeric(df.Reaction_Time)
+            ax[0][col].plot(df2.Reaction_Time,df2.Pupil_change,'o',
+                          markersize = 1)
+            ax[0][col].set_xlabel("Reaction Time (s)")
+            ax[0][col].set_ylabel("$\\Delta$pupil diameter (z-score)")
+            df3 = df[['Correct','Pupil_size_tone']].dropna()
+            pupil_size_by_correctness = [df3.Pupil_size_tone[df.Correct==True].values,
+                                         df3.Pupil_size_tone[df.Correct==False].values]
+            v1 = ax[1][col].violinplot(pupil_size_by_correctness,showmeans=True)
+            ax[1][col].set_ylabel("Pupil Diameter (z-score)")
+            ax[1][col].set_xticks([1,2])
+            ax[1][col].set_xticklabels(["Correct","Incorrect"])
+            df3 = df[['Correct','Pupil_change']].dropna()
+            pupil_size_by_correctness = [df3.Pupil_change[df.Correct==True].values,
+                                         df3.Pupil_change[df.Correct==False].values]
+            v2 = ax[2][col].violinplot(pupil_size_by_correctness,showmeans=True)
+            ax[2][col].set_ylabel("$\\Delta$Pupil Diameter (z-score)")
+            ax[2][col].set_xticks([1,2])
+            ax[2][col].set_xticklabels(["Correct","Incorrect"])
+            violins.append(v1)
+            violins.append(v2)
+            
+        for violin in violins:
+            violin["bodies"][0].set_label("Probability Density")
+            violin["cmeans"].set_color("black")
+            violin["cmeans"].set_label("Mean")
+            violin["cmins"].set_label("Minima and maxima")
+        for a,name in zip(ax.flatten(),ascii_uppercase):
+            a.set_title("$\\bf{("+name+")}$",loc='right')
+        ax[1][0].legend(loc="lower center")
+
+    
+    def show(self):
+        self.fig.show()
 
 def get_dataframe_of_full_dataset(cls, drive):
     result = []
@@ -428,6 +484,8 @@ def dump_dataset_as_csv_to(path, recording_class,collapse_across_rois):
     csv.close()
 
 if __name__=="__main__":
+    plt.close('all')
+    AttentionMetricsVsPupilSizeFigure().show()
     # dump_dataset_as_csv_to(
     #     "C:/Users/viviani/Desktop/reaction_time_vs_pupil_size_left_only.csv",
     #     recording_class='left_only_high_contrast',
@@ -439,14 +497,13 @@ if __name__=="__main__":
     # plt.close('all')
     # with warnings.catch_warnings():
     #     warnings.simplefilter('ignore')
-    #     df = pd.read_csv("C:/Users/viviani/Desktop/reaction_time_vs_pupil_size_low_contrast.csv")
     #     print("In high contrast (easy task difficulty) conditions:")
     #     perform_attention_metrics_testing_left_only()
     #     print("\n\n In low contrast (hard task difficulty) conditions:")
     #     perform_attention_metrics_testing_low_contrast()
     #     print("\n\n Considering the Derivative of the pupil size")
     #     perform_attention_metrics_testing_with_derivative()
-    # trial_licking = []
+    # # trial_licking = []
     # func = lambda p:trial_licking.extend(CollapsingRecordingUnroller(p,
     #                                                                  ignore_eye_video=True
     #                                                                  ).cluster_licking())
@@ -471,5 +528,3 @@ if __name__=="__main__":
     # ax.set_ylabel('Trial Number')
     # ax.set_xlabel(r'$\Delta$t from trial onset (s)')
     # fig.show()
-    a=CollapsingRecordingUnroller(get_exp_path("2017-02-09_01_CFEB041",'H:\\'))
-    a.plot_licking_clustering_approach()
